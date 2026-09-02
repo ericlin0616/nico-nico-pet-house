@@ -338,9 +338,11 @@ function json_(obj) {
 }
 
 function esc_(s) {
-  return String(s == null ? "" : s)
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, """);
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (ch) {
+    if (ch === "&") return "&#38;";
+    if (ch === "<") return "&#60;";
+    if (ch === ">") return "&#62;";
+    if (ch === '"') return "&#34;";
+    return "&#39;";
+  });
 }
