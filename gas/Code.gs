@@ -19,13 +19,11 @@
  */
 
 var CONFIG = {
-  // 已在商家雲端建立的資料夾
-  FOLDER_ID: "1D8bFBLSdR57s7KhghwJ1G52Quk84Cu2v",
-  // 第一次送出時會自動建立試算表，並把 ID 寫在腳本屬性。也可自行貼上。
+  // 留空：由腳本用「執行身分」的 Google 帳號自動建立雲端資料夾與試算表
+  FOLDER_ID: "",
   SHEET_ID: "",
   SHEET_NAME: "入園登記",
   BUSINESS_NAME: "Nico Nico Pet House 尼口尼口寵物精緻美容旅館",
-  // 選填：同時把案件副本寄給商家
   BUSINESS_EMAIL: "",
   OTP_TTL_SEC: 600,
   OTP_MAX_TRIES: 5
@@ -53,7 +51,7 @@ function doPost(e) {
     if (action === "submit") return json_(submit_(payload));
     return json_({ success: false, message: "未知的操作，請重新整理頁面後再試。" });
   } catch (err) {
-    return json_({ success: false, message: String(err && err.message ? err.message : "伺服器暫時無法處理，請稍後再試。") });
+    return json_({ success: false, message: friendlyErr_(err) });
   } finally {
     try { lock.releaseLock(); } catch (e2) {}
   }
@@ -109,7 +107,7 @@ function submit_(payload) {
   var now = new Date();
   var tzNow = Utilities.formatDate(now, "Asia/Taipei", "yyyy-MM-dd HH:mm:ss");
 
-  var folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
+  var folder = getRootFolder_();
   var caseFolder = folder.createFolder(
     caseId + "_" + safeName_(pet.name || "毛孩") + "_" + Utilities.formatDate(now, "Asia/Taipei", "yyyyMMdd")
   );
@@ -129,6 +127,8 @@ function submit_(payload) {
     sendBusinessMail_(owner, pet, caseId, pdfFile, caseFolder.getUrl());
   }
 
+  consumeOtp_(phone);
+
   return {
     success: true,
     caseId: caseId,
@@ -138,32 +138,60 @@ function submit_(payload) {
 }
 
 function verifyOtp_(phone, otp) {
-  var cache = CacheService.getScriptCache();
-  var key = "otp_" + phone;
-  var raw = cache.get(key);
-  if (!raw) throw new Error("驗證碼已過期或尚未發送，請重新取得驗證碼。");
-  var rec = JSON.parse(raw);
+  var rec = readOtp_(phone);
   rec.tries = (rec.tries || 0) + 1;
   if (rec.tries > CONFIG.OTP_MAX_TRIES) {
-    cache.remove(key);
+    consumeOtp_(phone);
     throw new Error("驗證碼錯誤次數過多，請重新發送。");
   }
   if (String(rec.code) !== String(otp)) {
-    cache.put(key, JSON.stringify(rec), CONFIG.OTP_TTL_SEC);
+    CacheService.getScriptCache().put("otp_" + phone, JSON.stringify(rec), CONFIG.OTP_TTL_SEC);
     throw new Error("驗證碼不正確，請再試一次。");
   }
-  cache.remove(key);
+}
+
+function readOtp_(phone) {
+  var raw = CacheService.getScriptCache().get("otp_" + phone);
+  if (!raw) throw new Error("驗證碼已過期或尚未發送，請重新取得驗證碼。");
+  return JSON.parse(raw);
+}
+
+function consumeOtp_(phone) {
+  CacheService.getScriptCache().remove("otp_" + phone);
+}
+
+function getRootFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = String(CONFIG.FOLDER_ID || props.getProperty("FOLDER_ID") || "");
+  if (id) {
+    try {
+      return DriveApp.getFolderById(id);
+    } catch (err) {
+      // 舊資料夾 ID 對這個 Google 帳號無效時，改為自動建立
+    }
+  }
+  var existing = DriveApp.getRootFolder().getFoldersByName("NicoPark 入園資料");
+  var folder = existing.hasNext() ? existing.next() : DriveApp.createFolder("NicoPark 入園資料");
+  props.setProperty("FOLDER_ID", folder.getId());
+  return folder;
 }
 
 function getSheet_() {
   var props = PropertiesService.getScriptProperties();
   var id = CONFIG.SHEET_ID || props.getProperty("SHEET_ID") || "";
-  var ss;
+  var ss = null;
   if (id) {
-    ss = SpreadsheetApp.openById(id);
-  } else {
-    ss = SpreadsheetApp.create("NicoPark 入園登記");
-    DriveApp.getFileById(ss.getId()).moveTo(DriveApp.getFolderById(CONFIG.FOLDER_ID));
+    try { ss = SpreadsheetApp.openById(id); } catch (err) { ss = null; }
+  }
+  if (!ss) {
+    var folder = getRootFolder_();
+    var files = folder.getFilesByName("NicoPark 入園登記");
+    if (files.hasNext()) {
+      ss = SpreadsheetApp.open(files.next());
+    } else {
+      ss = SpreadsheetApp.create("NicoPark 入園登記");
+      DriveApp.getFileById(ss.getId()).moveTo(folder);
+    }
     props.setProperty("SHEET_ID", ss.getId());
   }
   var sh = ss.getSheetByName(CONFIG.SHEET_NAME) || ss.getSheets()[0];
@@ -174,6 +202,20 @@ function getSheet_() {
     sh.getRange(1, 1, 1, SHEET_HEADERS.length).setFontWeight("bold");
   }
   return sh;
+}
+
+function friendlyErr_(err) {
+  var m = String(err && err.message ? err.message : err || "");
+  if (/指定 ID|specified ID|not found|沒有編輯/i.test(m)) {
+    return "雲端資料夾尚未建立或沒有權限。請在 Apps Script 存檔並「管理部署 → 新版本」後再送出，系統會自動建立資料夾。";
+  }
+  if (/授權|Authorization|Access denied|權限/i.test(m)) {
+    return "Google 尚未授權雲端或試算表權限。請在 Apps Script 重新授權後再試。";
+  }
+  if (/配額|quota|Service invoked too many/i.test(m)) {
+    return "今日寄信或雲端寫入次數已用完，請稍後再試。";
+  }
+  return m || "伺服器暫時無法處理，請稍後再試。";
 }
 
 function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl, signUrl) {
