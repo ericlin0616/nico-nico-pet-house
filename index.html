@@ -785,7 +785,10 @@
             </div>
             <div class="field">
               <label for="petAge">年齡 <span class="req">必填</span></label>
-              <input id="petAge" name="petAge" type="text" maxlength="30" placeholder="例如：3歲" />
+              <div class="suffix">
+                <input id="petAge" name="petAge" type="number" inputmode="decimal" min="0" max="40" step="0.1" placeholder="例如：3" />
+                <span>歲</span>
+              </div>
               <p class="error" data-err="petAge"></p>
             </div>
             <div class="field">
@@ -1255,7 +1258,7 @@
           name: val("petName"),
           gender: radio("petGender"),
           breed: val("petBreed"),
-          age: val("petAge"),
+          age: val("petAge") ? val("petAge") + "歲" : "",
           weightKg: val("petWeight"),
           neutered: radio("neutered"),
           inHeat: radio("inHeat")
@@ -1303,7 +1306,7 @@
         fill("emergencyPhone", o.emergencyPhone);
         fill("petName", p.name);
         fill("petBreed", p.breed);
-        fill("petAge", p.age);
+        fill("petAge", String(p.age || "").replace(/[^\d.]/g, ""));
         fill("petWeight", p.weightKg);
         fill("vetInfo", c.vetInfo);
         fill("guardingOther", c.guardingOther);
@@ -1346,7 +1349,8 @@
       need("petName", val("petName").length >= 1, "請填寫毛寶名字");
       need("petGender", !!radio("petGender"), "請選擇性別");
       need("petBreed", val("petBreed").length >= 1, "請填寫品種");
-      need("petAge", val("petAge").length >= 1, "請填寫年齡");
+      const ageNum = parseFloat(String(val("petAge")).replace(",", "."));
+      need("petAge", Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 40, "請填寫年齡（歲）");
       const w = parseFloat(String(val("petWeight")).replace(",", "."));
       need("petWeight", Number.isFinite(w) && w >= 0.1 && w <= 99, "請填寫體重（公斤）");
       need("neutered", !!radio("neutered"), "請選擇是否結紮");
