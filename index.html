@@ -193,6 +193,7 @@
       background: var(--cocoa);
       color: #F8F3EC;
     }
+    .site-nav[hidden] { display: none !important; }
 
     .pet-head {
       display: flex;
@@ -671,6 +672,24 @@
     .btn-ghost:hover:not(:disabled) {
       background: var(--warm);
     }
+    .btn-back {
+      width: auto;
+      min-width: 0;
+      min-height: 34px;
+      padding: 4px 12px;
+      margin: 0 auto;
+      order: 2;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      background: transparent;
+      color: var(--muted);
+      box-shadow: none;
+    }
+    .btn-back:hover:not(:disabled) {
+      background: transparent;
+      color: var(--cocoa);
+    }
     .btn-text {
       background: transparent;
       color: var(--muted);
@@ -770,7 +789,8 @@
         align-items: center;
       }
       .actions .btn { width: auto; min-width: 168px; }
-      .actions .btn-primary { margin-left: auto; }
+      .actions .btn-primary { margin-left: auto; order: 2; }
+      .actions .btn-back { min-width: 0; margin: 0; order: 1; }
       .sign-frame { height: 200px; }
     }
 
@@ -1265,8 +1285,8 @@
         </article>
 
         <div class="actions">
-          <button type="button" class="btn btn-ghost" id="back-1">返回上一步</button>
           <button type="button" class="btn btn-primary" id="to-step-3">下一步：手機驗證</button>
+          <button type="button" class="btn btn-back" id="back-1">返回</button>
         </div>
       </section>
 
@@ -1292,8 +1312,8 @@
           </div>
         </article>
         <div class="actions">
-          <button type="button" class="btn btn-ghost" id="back-2">返回上一步</button>
           <button type="button" class="btn btn-primary" id="submit-form">確認送出入園資料</button>
+          <button type="button" class="btn btn-back" id="back-2">返回</button>
         </div>
       </section>
     </form>
@@ -1974,6 +1994,13 @@
       });
     }
 
+    function syncSiteNav() {
+      const nav = document.querySelector(".site-nav");
+      if (!nav) return;
+      const hide = mode === "register" && (current === 2 || current === 3 || current === "success");
+      nav.hidden = hide;
+    }
+
     function showPanel(step) {
       mode = "register";
       document.getElementById("nav-register").classList.add("is-on");
@@ -1990,6 +2017,7 @@
       });
       if (step === "success") document.getElementById("step-success").hidden = false;
       setProgress(step === "success" ? 3 : step);
+      syncSiteNav();
       const panel = document.querySelector("[data-panel=\"" + step + "\"]");
       const heading = panel && panel.querySelector("h2");
       goTop();
@@ -2151,6 +2179,7 @@
         const h = lookup.querySelector("h2");
         if (h) try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); }
         announce("查詢案件");
+        syncSiteNav();
         return;
       }
       lookup.hidden = true;
@@ -2163,6 +2192,7 @@
           showPanel(typeof current === "number" ? current : 1);
         }
       }
+      syncSiteNav();
     }
 
     async function sendLookupOtp() {
