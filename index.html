@@ -769,10 +769,152 @@
       html { scroll-behavior: auto; }
       .panel { animation: none; }
       .btn { transition: none; }
+      .welcome-row { transition: none; }
+    }
+
+    .welcome {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: end center;
+      padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(63, 51, 43, 0.45);
+    }
+    .welcome[hidden] { display: none !important; }
+    body.welcome-open { overflow: hidden; }
+    .welcome-sheet {
+      width: min(540px, 100%);
+      max-height: min(94dvh, 960px);
+      background: var(--paper);
+      border-radius: 24px;
+      box-shadow: 0 18px 50px -18px rgba(63, 51, 43, 0.45);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 14px 14px 12px;
+    }
+    .welcome-kicker {
+      margin: 2px 0 0;
+      text-align: center;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: lowercase;
+      color: var(--oat);
+      font-weight: 600;
+    }
+    .welcome-sheet h2 {
+      margin: 2px 0 10px;
+      text-align: center;
+      font-size: 1.08rem;
+      color: var(--cocoa-deep);
+    }
+    .welcome-viewport {
+      overflow: hidden;
+      border-radius: 16px;
+      background: #F4EBE1;
+      touch-action: pan-y;
+      min-height: 0;
+      flex: 1;
+    }
+    .welcome-row {
+      display: flex;
+      width: 300%;
+      transition: transform 280ms var(--ease-out);
+    }
+    .welcome-row figure {
+      margin: 0;
+      width: 33.3333%;
+      display: block;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      max-height: calc(94dvh - 196px);
+    }
+    .welcome-row img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #F4EBE1;
+    }
+    .welcome-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 10px 0 8px;
+    }
+    .welcome-dots button {
+      width: 8px;
+      height: 8px;
+      padding: 0;
+      border: 0;
+      border-radius: 99px;
+      background: var(--oat-soft);
+    }
+    .welcome-dots button.is-on {
+      width: 20px;
+      background: var(--cocoa);
+    }
+    .welcome-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .fab-notice {
+      position: fixed;
+      left: max(14px, env(safe-area-inset-left));
+      bottom: calc(92px + env(safe-area-inset-bottom));
+      z-index: 6;
+      width: 54px;
+      height: 54px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--cocoa);
+      color: #F8F3EC;
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      box-shadow: 0 10px 24px -10px rgba(63, 51, 43, 0.55);
+    }
+    .fab-notice[hidden] { display: none !important; }
+    @media (min-width: 641px) {
+      .welcome { place-items: center; }
+      .welcome-nav { flex-direction: row; }
+      .welcome-nav .btn { width: auto; flex: 1; }
+      .fab-notice { bottom: 28px; }
     }
   </style>
 </head>
-<body>
+<body class="welcome-open">
+  <div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <div class="welcome-sheet">
+      <p class="welcome-kicker">niconico park</p>
+      <h2 id="welcome-title">入園前請先閱讀</h2>
+      <div class="welcome-viewport" id="welcome-viewport">
+        <div class="welcome-row" id="welcome-row">
+          <figure>
+            <img src="nicopark-notice.jpg" alt="預約須知：出發前準備、健康與防疫、戶外活動與權益宣告" width="1400" height="1979" />
+          </figure>
+          <figure>
+            <img src="nicopark-schedule.jpg" alt="狗狗放風日一日行程表" width="1400" height="1979" />
+          </figure>
+          <figure>
+            <img src="nicopark-price.jpg" alt="NicoPark 收費一覽" width="1400" height="1980" />
+          </figure>
+        </div>
+      </div>
+      <div class="welcome-dots" role="tablist" aria-label="須知頁次">
+        <button type="button" class="is-on" data-welcome="0" aria-label="預約須知"></button>
+        <button type="button" data-welcome="1" aria-label="一日行程表"></button>
+        <button type="button" data-welcome="2" aria-label="收費一覽"></button>
+      </div>
+      <div class="welcome-nav">
+        <button type="button" class="btn btn-ghost" id="welcome-prev" hidden>上一張</button>
+        <button type="button" class="btn btn-primary" id="welcome-next">下一張</button>
+      </div>
+    </div>
+  </div>
+  <button type="button" class="fab-notice" id="reopen-welcome" hidden aria-label="再次查看須知">須知</button>
   <div class="app">
     <header class="masthead">
       <div class="logo-crop">
@@ -2140,6 +2282,63 @@
     syncReveals();
     showPanel(1);
     if (/lookup/i.test(location.hash || "")) setMode("lookup");
+
+    (function initWelcome() {
+      const overlay = document.getElementById("welcome");
+      const row = document.getElementById("welcome-row");
+      const viewport = document.getElementById("welcome-viewport");
+      const prev = document.getElementById("welcome-prev");
+      const next = document.getElementById("welcome-next");
+      const fab = document.getElementById("reopen-welcome");
+      const dots = $$("[data-welcome]");
+      let idx = 0;
+      let startX = 0;
+      let dragging = false;
+
+      function setIdx(n) {
+        idx = Math.max(0, Math.min(2, n));
+        row.style.transform = "translateX(-" + (idx * 33.3333) + "%)";
+        dots.forEach((d, i) => d.classList.toggle("is-on", i === idx));
+        prev.hidden = idx === 0;
+        next.textContent = idx === 2 ? "我已了解，開始填寫" : "下一張";
+      }
+      function openWelcome() {
+        overlay.hidden = false;
+        document.body.classList.add("welcome-open");
+        fab.hidden = true;
+        setIdx(0);
+      }
+      function closeWelcome() {
+        overlay.hidden = true;
+        document.body.classList.remove("welcome-open");
+        fab.hidden = false;
+      }
+      next.addEventListener("click", () => {
+        if (idx >= 2) closeWelcome();
+        else setIdx(idx + 1);
+      });
+      prev.addEventListener("click", () => setIdx(idx - 1));
+      dots.forEach((d) => d.addEventListener("click", () => setIdx(Number(d.getAttribute("data-welcome")))));
+      fab.addEventListener("click", openWelcome);
+      viewport.addEventListener("touchstart", (e) => {
+        if (!e.changedTouches || !e.changedTouches[0]) return;
+        dragging = true;
+        startX = e.changedTouches[0].clientX;
+      }, { passive: true });
+      viewport.addEventListener("touchend", (e) => {
+        if (!dragging || !e.changedTouches || !e.changedTouches[0]) return;
+        dragging = false;
+        const dx = e.changedTouches[0].clientX - startX;
+        if (dx < -40) setIdx(idx + 1);
+        else if (dx > 40) setIdx(idx - 1);
+      }, { passive: true });
+      document.addEventListener("keydown", (e) => {
+        if (overlay.hidden) return;
+        if (e.key === "ArrowRight") { e.preventDefault(); if (idx >= 2) closeWelcome(); else setIdx(idx + 1); }
+        if (e.key === "ArrowLeft") { e.preventDefault(); setIdx(idx - 1); }
+      });
+      setIdx(0);
+    })();
   })();
   </script>
 </body>
