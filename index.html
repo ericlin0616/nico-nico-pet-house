@@ -987,6 +987,16 @@
       color: var(--cocoa-deep);
       animation: agreeFade 0.45s 0.35s both;
     }
+    .agree-time {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      font-variant-numeric: tabular-nums;
+      color: var(--cocoa);
+      animation: agreeFade 0.45s 0.48s both;
+    }
     @keyframes agreePop {
       from { transform: scale(0.55); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
@@ -1081,6 +1091,7 @@
           </svg>
         </div>
         <p>已同意須知</p>
+        <span class="agree-time" id="agree-time"></span>
       </div>
     </div>
   </div>
@@ -2473,15 +2484,32 @@
         prev.hidden = idx === 0;
         next.textContent = idx === 2 ? "我已同意須知，開始填寫" : "下一張";
       }
+      function formatAgreeTime(d) {
+        const parts = new Intl.DateTimeFormat("zh-TW", {
+          timeZone: "Asia/Taipei",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false
+        }).formatToParts(d);
+        const get = (t) => (parts.find((p) => p.type === t) || {}).value || "";
+        return get("year") + "年" + get("month") + "月" + get("day") + "日　" + get("hour") + ":" + get("minute") + ":" + get("second");
+      }
       function playAgreeThenClose() {
         if (agreeing) return;
         agreeing = true;
         next.disabled = true;
         const agree = document.getElementById("welcome-agree");
+        const timeEl = document.getElementById("agree-time");
+        const when = formatAgreeTime(new Date());
+        if (timeEl) timeEl.textContent = when;
         if (!agree) { closeWelcome(); return; }
         agree.hidden = false;
-        announce("已同意須知");
-        const wait = reduced ? 200 : 1250;
+        announce("已同意須知 " + when);
+        const wait = reduced ? 400 : 1600;
         window.setTimeout(closeWelcome, wait);
       }
       function openWelcome() {
