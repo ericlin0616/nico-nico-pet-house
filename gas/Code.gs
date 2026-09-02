@@ -29,7 +29,10 @@ var CONFIG = {
   BUSINESS_NAME: "Nico Nico Pet House 尼口尼口寵物精緻美容旅館",
   BUSINESS_EMAIL: "",
   OTP_TTL_SEC: 600,
-  OTP_MAX_TRIES: 5
+  OTP_MAX_TRIES: 5,
+  SEND_MAIL: true,
+  ATTACH_PDF: false,
+  MAIL_HOUR_CAP: 40
 };
 
 var SHEET_HEADERS = [
@@ -87,19 +90,22 @@ function sendOtp_(payload) {
     exp: Date.now() + CONFIG.OTP_TTL_SEC * 1000,
     tries: 0
   }), CONFIG.OTP_TTL_SEC);
-  cache.put("otp_sent_" + phone, "1", 60);
+  cache.put("otp_sent_" + phone, "1", 90);
+  if (hourCount_("otp") >= 25) {
+    throw new Error("目前驗證信件發送次數已達上限，請一小時後再試。");
+  }
 
-  MailApp.sendEmail({
+  sendMailSafe_({
     to: email,
-    subject: "【" + CONFIG.BUSINESS_NAME + "】入園驗證碼 " + code,
+    subject: "NicoPark 入園驗證碼",
     name: "Nico Nico Pet House",
-    htmlBody:
-      "<p>您好，</p>" +
-      "<p>您的 NicoPark 入園驗證碼為：</p>" +
-      "<p style=\"font-size:28px;letter-spacing:8px;font-weight:700;color:#53453A\">" + code + "</p>" +
-      "<p>請於 10 分鐘內輸入。若不是您本人操作，請忽略此信。</p>" +
-      "<p>Nico Nico Pet House 尼口尼口寵物精緻美容旅館</p>"
+    body:
+      "您好，\n\n" +
+      "您的入園驗證碼：" + code + "\n" +
+      "請於 10 分鐘內輸入。若不是您本人操作，請忽略此信。\n\n" +
+      "Nico Nico Pet House 尼口尼口寵物精緻美容旅館\n"
   });
+  bumpHour_("otp");
 
   return { success: true, channel: "email" };
 }
@@ -151,9 +157,15 @@ function submit_(payload) {
     appendRow_(caseId, tzNow, owner, item.pet, item.care, payload, caseFolder.getUrl(), pdfFile.getUrl(), signFile.getUrl());
   });
 
-  sendCustomerMail_(owner, names, caseId, pdfFile);
-  if (CONFIG.BUSINESS_EMAIL) {
-    sendBusinessMail_(owner, names, caseId, pdfFile, caseFolder.getUrl());
+  var mailed = false;
+  try {
+    sendCustomerMail_(owner, names, caseId, pdfFile);
+    mailed = true;
+    if (CONFIG.BUSINESS_EMAIL) {
+      sendBusinessMail_(owner, names, caseId, pdfFile, caseFolder.getUrl());
+    }
+  } catch (mailErr) {
+    mailed = false;
   }
 
   consumeOtp_(phone);
@@ -162,7 +174,10 @@ function submit_(payload) {
     success: true,
     caseId: caseId,
     pdfUrl: pdfFile.getUrl(),
-    message: "入園資料已送出（" + names.join("、") + "）。副本已寄到 " + owner.email + "。"
+    message: mailed
+      ? "入園資料已送出（" + names.join("、") + "）。副本已寄到 " + owner.email + "。"
+      : "入園資料已送出（" + names.join("、") + "）。案件與 PDF 已存檔；目前 Google 寄信受限，請用案件查詢或雲端連結取得副本。"
+  };
   };
 }
 
@@ -287,8 +302,8 @@ function friendlyErr_(err) {
   if (/授權|Authorization|Access denied|權限/i.test(m)) {
     return "Google 尚未授權雲端或試算表權限。請在 Apps Script 重新授權後再試。";
   }
-  if (/配額|quota|Service invoked too many/i.test(m)) {
-    return "今日寄信或雲端寫入次數已用完，請稍後再試。";
+  if (/limit|quota|Mail service|disabled|blocked|restricted|Gmail|寄信/i.test(m)) {
+    return "Google 目前暫時限制此帳號寄信（常見於短時間測試太多封）。請先停止測試、等 24 小時後再授權一次。入園資料仍可寫入雲端與試算表。";
   }
   return m || "伺服器暫時無法處理，請稍後再試。";
 }
@@ -569,36 +584,61 @@ function sendCustomerMail_(owner, names, caseId, pdfFile) {
   var to = String(owner.email || "");
   if (!to) return;
   var petLabel = (names && names.length) ? names.join("、") : "毛寶";
-  var pdfBlob = pdfFile.getBlob().setName(caseId + "_NicoPark入園資料.pdf");
-  MailApp.sendEmail({
+  var pdfUrl = pdfFile ? pdfFile.getUrl() : "";
+  var opts = {
     to: to,
-    subject: "【" + CONFIG.BUSINESS_NAME + "】入園資料已受理（" + caseId + "）",
+    subject: "NicoPark 入園資料已受理 " + caseId,
     name: "Nico Nico Pet House",
-    htmlBody:
-      '<div style="font-family:\'Noto Sans TC\',PingFang TC,Microsoft JhengHei,sans-serif;color:#3F332B;line-height:1.7;">' +
-      "<p>" + esc_(owner.name) + " 您好，</p>" +
-      "<p>我們已收到毛寶 <strong>" + esc_(petLabel) + "</strong> 的 NicoPark 入園資料與電子簽署。</p>" +
-      "<p>案件識別碼：<strong>" + esc_(caseId) + "</strong></p>" +
-      "<p>完整入園表單（含全部選項、未勾項目與手寫簽名）請見本信 <strong>PDF 附件</strong>，請勿只看縮圖。</p>" +
-      "<p style=\"font-size:13px;color:#6B5C4F;\">之後也可在網站以手機驗證碼查詢案件與下載副本。</p>" +
-      "<p>Nico Nico Pet House 尼口尼口寵物精緻美容旅館</p></div>",
-    attachments: [pdfBlob]
-  });
+    body:
+      (owner.name || "") + " 您好，\n\n" +
+      "我們已收到毛寶 " + petLabel + " 的入園資料與電子簽署。\n" +
+      "案件識別碼：" + caseId + "\n" +
+      (pdfUrl ? ("完整表單 PDF：" + pdfUrl + "\n") : "") +
+      "也可到網站以手機驗證碼查詢案件。\n\n" +
+      "Nico Nico Pet House 尼口尼口寵物精緻美容旅館\n"
+  };
+  if (CONFIG.ATTACH_PDF && pdfFile) {
+    opts.attachments = [pdfFile.getBlob().setName(caseId + "_NicoPark入園資料.pdf")];
+  }
+  sendMailSafe_(opts);
 }
 
 function sendBusinessMail_(owner, names, caseId, pdfFile, folderUrl) {
   var petLabel = (names && names.length) ? names.join("、") : "";
-  MailApp.sendEmail({
+  sendMailSafe_({
     to: CONFIG.BUSINESS_EMAIL,
-    subject: "【新入園】" + caseId + " " + petLabel + "／" + (owner.name || ""),
+    subject: "新入園 " + caseId + " " + petLabel,
     name: "NicoPark",
-    htmlBody:
-      "<p>新的入園資料已寫入試算表並存雲端。</p>" +
-      "<p>案件：" + esc_(caseId) + "<br>飼主：" + esc_(owner.name) + " " + esc_(owner.phone) +
-      "<br>毛寶：" + esc_(petLabel) + "</p>" +
-      "<p><a href=\"" + folderUrl + "\">開啟雲端資料夾</a></p>",
-    attachments: [pdfFile.getBlob().setName(caseId + "_NicoPark入園資料.pdf")]
+    body:
+      "新的入園資料已寫入試算表並存雲端。\n" +
+      "案件：" + caseId + "\n飼主：" + (owner.name || "") + " " + (owner.phone || "") +
+      "\n毛寶：" + petLabel + "\n資料夾：" + (folderUrl || "") + "\n"
   });
+}
+
+function sendMailSafe_(opts) {
+  if (CONFIG.SEND_MAIL === false) {
+    throw new Error("目前暫停寄信。");
+  }
+  if (hourCount_("mail") >= (CONFIG.MAIL_HOUR_CAP || 40)) {
+    throw new Error("本小時寄信次數已達上限，請稍後再試。");
+  }
+  MailApp.sendEmail(opts);
+  bumpHour_("mail");
+}
+
+function hourKey_(kind) {
+  var h = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyyMMddHH");
+  return "hour_" + kind + "_" + h;
+}
+function hourCount_(kind) {
+  var n = Number(CacheService.getScriptCache().get(hourKey_(kind)) || "0");
+  return isNaN(n) ? 0 : n;
+}
+function bumpHour_(kind) {
+  var k = hourKey_(kind);
+  var n = hourCount_(kind) + 1;
+  CacheService.getScriptCache().put(k, String(n), 3600);
 }
 
 function addLine_(body, label, value) {
