@@ -329,15 +329,7 @@ function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl,
 }
 
 function createPdf_(folder, caseId, tzNow, owner, list, payload, signBlob) {
-  var html = buildPdfHtml_(caseId, tzNow, owner, list, payload, signBlob);
-  var pdfBlob;
-  try {
-    pdfBlob = Utilities.newBlob(html, MimeType.HTML, caseId + ".html")
-      .getAs(MimeType.PDF)
-      .setName(caseId + "_NicoPark入園資料.pdf");
-  } catch (err) {
-    pdfBlob = createPdfViaDoc_(caseId, tzNow, owner, list, payload, signBlob);
-  }
+  var pdfBlob = createPdfViaDoc_(caseId, tzNow, owner, list, payload, signBlob);
   return folder.createFile(pdfBlob);
 }
 
@@ -379,12 +371,15 @@ function createPdfViaDoc_(caseId, tzNow, owner, list, payload, signBlob) {
   addLine_(body, "簽署時間", prettyTime_(payload.agreedAt) || tzNow);
   if (signBlob) {
     try {
+      body.appendParagraph("手寫簽名：");
       var img = body.appendImage(signBlob);
-      var iw = img.getWidth() || 1;
-      var ih = img.getHeight() || 1;
-      var scale = Math.min(380 / iw, 118 / ih);
-      img.setWidth(iw * scale);
-      img.setHeight(ih * scale);
+      var iw = Number(img.getWidth()) || 1;
+      var ih = Number(img.getHeight()) || 1;
+      if (iw / ih > 8) ih = iw / 3.2;
+      var scale = Math.min(420 / iw, 150 / ih, 1);
+      if (scale <= 0) scale = 0.5;
+      img.setWidth(Math.max(160, iw * scale));
+      img.setHeight(Math.max(50, ih * scale));
     } catch (e) {}
   }
   doc.saveAndClose();
