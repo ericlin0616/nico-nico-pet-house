@@ -164,35 +164,34 @@
 
     .site-nav {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin: 16px 0 0;
+      flex-direction: row;
+      gap: 6px;
+      justify-content: center;
+      margin: 10px auto 0;
+      padding: 3px;
+      max-width: 280px;
+      background: color-mix(in srgb, var(--paper) 78%, transparent);
+      border-radius: 999px;
+      box-shadow: 0 0 0 1px rgba(83, 69, 58, 0.08);
     }
     .site-nav button {
       appearance: none;
       border: 0;
-      width: 100%;
-      background: color-mix(in srgb, var(--paper) 82%, transparent);
+      flex: 1;
+      min-width: 0;
+      background: transparent;
       color: var(--cocoa);
       font: inherit;
-      font-size: 0.86rem;
+      font-size: 0.78rem;
       font-weight: 600;
-      letter-spacing: 0.04em;
-      padding: 12px 16px;
+      letter-spacing: 0.02em;
+      padding: 7px 10px;
       border-radius: 999px;
-      box-shadow: 0 0 0 1px rgba(83, 69, 58, 0.08);
+      white-space: nowrap;
     }
     .site-nav button.is-on {
       background: var(--cocoa);
       color: #F8F3EC;
-      box-shadow: none;
-    }
-    @media (min-width: 641px) {
-      .site-nav {
-        flex-direction: row;
-        justify-content: center;
-      }
-      .site-nav button { width: auto; min-width: 148px; }
     }
 
     .pet-head {
