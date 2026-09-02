@@ -788,40 +788,82 @@
       display: grid;
       place-items: end center;
       padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
-      background: rgba(63, 51, 43, 0.45);
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 110%, rgba(172, 157, 141, 0.28), transparent 55%),
+        rgba(63, 51, 43, 0.32);
+      -webkit-backdrop-filter: blur(18px) saturate(1.35);
+      backdrop-filter: blur(18px) saturate(1.35);
     }
     .welcome[hidden] { display: none !important; }
     body.welcome-open { overflow: hidden; }
     .welcome-sheet {
+      position: relative;
       width: min(540px, 100%);
       max-height: min(94dvh, 960px);
-      background: var(--paper);
-      border-radius: 24px;
-      box-shadow: 0 18px 50px -18px rgba(63, 51, 43, 0.45);
+      background: linear-gradient(185deg, rgba(255, 252, 248, 0.58) 0%, rgba(248, 243, 236, 0.38) 55%, rgba(231, 217, 204, 0.32) 100%);
+      -webkit-backdrop-filter: blur(28px) saturate(1.55);
+      backdrop-filter: blur(28px) saturate(1.55);
+      border-radius: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.48);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.72),
+        inset 0 -1px 0 rgba(83, 69, 58, 0.06),
+        0 18px 50px -18px rgba(63, 51, 43, 0.42);
       display: flex;
       flex-direction: column;
       overflow: hidden;
       padding: 14px 14px 12px;
     }
+    .welcome-sheet::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 38%;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.46), transparent);
+    }
+    .welcome-sheet::after {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -40%;
+      width: 36%;
+      height: 200%;
+      pointer-events: none;
+      background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.38) 50%, transparent 70%);
+      transform: rotate(18deg);
+      animation: glassSheen 7s ease-in-out infinite;
+    }
+    @keyframes glassSheen {
+      0%, 100% { transform: translateX(0) rotate(18deg); opacity: 0.2; }
+      45% { transform: translateX(280%) rotate(18deg); opacity: 0.55; }
+    }
     .welcome-kicker {
+      position: relative;
+      z-index: 1;
       margin: 2px 0 0;
       text-align: center;
       font-size: 0.72rem;
       letter-spacing: 0.18em;
       text-transform: lowercase;
-      color: var(--oat);
+      color: var(--cocoa);
       font-weight: 600;
     }
     .welcome-sheet h2 {
+      position: relative;
+      z-index: 1;
       margin: 2px 0 10px;
       text-align: center;
       font-size: 1.08rem;
       color: var(--cocoa-deep);
     }
     .welcome-viewport {
+      position: relative;
+      z-index: 1;
       overflow: hidden;
       border-radius: 16px;
-      background: #F4EBE1;
+      background: rgba(244, 235, 225, 0.55);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
       touch-action: pan-y;
       min-height: 0;
       flex: 1;
@@ -846,6 +888,8 @@
       background: #F4EBE1;
     }
     .welcome-dots {
+      position: relative;
+      z-index: 1;
       display: flex;
       justify-content: center;
       gap: 8px;
@@ -857,16 +901,106 @@
       padding: 0;
       border: 0;
       border-radius: 99px;
-      background: var(--oat-soft);
+      background: rgba(172, 157, 141, 0.45);
     }
     .welcome-dots button.is-on {
       width: 20px;
       background: var(--cocoa);
     }
     .welcome-nav {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       gap: 8px;
+    }
+    .welcome .btn-primary {
+      background: linear-gradient(180deg, rgba(99, 82, 70, 0.92), rgba(63, 51, 43, 0.94));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+    .welcome .btn-ghost {
+      background: rgba(255, 252, 248, 0.28);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+    }
+    .welcome-agree {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      background: rgba(248, 243, 236, 0.22);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      backdrop-filter: blur(16px) saturate(1.4);
+    }
+    .welcome-agree[hidden] { display: none !important; }
+    .agree-glass {
+      position: relative;
+      text-align: center;
+      padding: 28px 22px 24px;
+    }
+    .agree-core {
+      width: 92px;
+      height: 92px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.72), rgba(231, 217, 204, 0.32));
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.62);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.85),
+        0 12px 28px -12px rgba(63, 51, 43, 0.35);
+      display: grid;
+      place-items: center;
+      animation: agreePop 0.55s var(--ease-out) both;
+    }
+    .agree-core svg { width: 42px; height: 42px; }
+    .agree-check {
+      fill: none;
+      stroke: #53453A;
+      stroke-width: 3.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: agreeDraw 0.5s 0.28s ease forwards;
+    }
+    .agree-ring {
+      position: absolute;
+      left: 50%;
+      top: 46px;
+      width: 92px;
+      height: 92px;
+      margin-left: -46px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, 0.55);
+      pointer-events: none;
+      animation: agreeRipple 1.15s ease-out both;
+    }
+    .agree-ring.delay { animation-delay: 0.16s; }
+    .agree-glass p {
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--cocoa-deep);
+      animation: agreeFade 0.45s 0.35s both;
+    }
+    @keyframes agreePop {
+      from { transform: scale(0.55); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes agreeDraw {
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes agreeRipple {
+      from { transform: scale(1); opacity: 0.7; }
+      to { transform: scale(2.15); opacity: 0; }
+    }
+    @keyframes agreeFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
     }
     .fab-notice {
       position: fixed;
@@ -875,15 +1009,22 @@
       z-index: 6;
       width: 54px;
       height: 54px;
-      border: 0;
+      border: 1px solid rgba(255, 255, 255, 0.55);
       border-radius: 50%;
-      background: var(--cocoa);
-      color: #F8F3EC;
+      background: linear-gradient(160deg, rgba(255, 252, 248, 0.58), rgba(231, 217, 204, 0.32));
+      -webkit-backdrop-filter: blur(16px) saturate(1.5);
+      backdrop-filter: blur(16px) saturate(1.5);
+      color: var(--cocoa-deep);
       font: inherit;
       font-size: 0.72rem;
       font-weight: 700;
       letter-spacing: 0.08em;
-      box-shadow: 0 10px 24px -10px rgba(63, 51, 43, 0.55);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 10px 24px -10px rgba(63, 51, 43, 0.45);
+    }
+    .fab-notice.is-agreed {
+      color: var(--cocoa);
     }
     .fab-notice[hidden] { display: none !important; }
     @media (min-width: 641px) {
@@ -891,6 +1032,14 @@
       .welcome-nav { flex-direction: row; }
       .welcome-nav .btn { width: auto; flex: 1; }
       .fab-notice { bottom: 28px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .welcome-sheet::after,
+      .agree-core,
+      .agree-check,
+      .agree-ring,
+      .agree-glass p { animation: none; }
+      .agree-check { stroke-dashoffset: 0; }
     }
   </style>
 </head>
@@ -920,6 +1069,18 @@
       <div class="welcome-nav">
         <button type="button" class="btn btn-ghost" id="welcome-prev" hidden>上一張</button>
         <button type="button" class="btn btn-primary" id="welcome-next">下一張</button>
+      </div>
+    </div>
+    <div class="welcome-agree" id="welcome-agree" hidden>
+      <div class="agree-glass">
+        <span class="agree-ring"></span>
+        <span class="agree-ring delay"></span>
+        <div class="agree-core">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path class="agree-check" d="M13 24.5 20.8 32.2 35.5 16.2"/>
+          </svg>
+        </div>
+        <p>已同意須知</p>
       </div>
     </div>
   </div>
@@ -2303,27 +2464,44 @@
       let idx = 0;
       let startX = 0;
       let dragging = false;
+      let agreeing = false;
 
       function setIdx(n) {
         idx = Math.max(0, Math.min(2, n));
         row.style.transform = "translateX(-" + (idx * 33.3333) + "%)";
         dots.forEach((d, i) => d.classList.toggle("is-on", i === idx));
         prev.hidden = idx === 0;
-        next.textContent = idx === 2 ? "我已了解，開始填寫" : "下一張";
+        next.textContent = idx === 2 ? "我已同意須知，開始填寫" : "下一張";
+      }
+      function playAgreeThenClose() {
+        if (agreeing) return;
+        agreeing = true;
+        next.disabled = true;
+        const agree = document.getElementById("welcome-agree");
+        if (!agree) { closeWelcome(); return; }
+        agree.hidden = false;
+        announce("已同意須知");
+        const wait = reduced ? 200 : 1250;
+        window.setTimeout(closeWelcome, wait);
       }
       function openWelcome() {
         overlay.hidden = false;
         document.body.classList.add("welcome-open");
         fab.hidden = true;
+        agreeing = false;
+        next.disabled = false;
+        const agree = document.getElementById("welcome-agree");
+        if (agree) agree.hidden = true;
         setIdx(0);
       }
       function closeWelcome() {
         overlay.hidden = true;
         document.body.classList.remove("welcome-open");
         fab.hidden = false;
+        fab.classList.add("is-agreed");
       }
       next.addEventListener("click", () => {
-        if (idx >= 2) closeWelcome();
+        if (idx >= 2) playAgreeThenClose();
         else setIdx(idx + 1);
       });
       prev.addEventListener("click", () => setIdx(idx - 1));
@@ -2343,7 +2521,7 @@
       }, { passive: true });
       document.addEventListener("keydown", (e) => {
         if (overlay.hidden) return;
-        if (e.key === "ArrowRight") { e.preventDefault(); if (idx >= 2) closeWelcome(); else setIdx(idx + 1); }
+        if (e.key === "ArrowRight") { e.preventDefault(); if (idx >= 2) playAgreeThenClose(); else setIdx(idx + 1); }
         if (e.key === "ArrowLeft") { e.preventDefault(); setIdx(idx - 1); }
       });
       setIdx(0);
