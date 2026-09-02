@@ -279,7 +279,12 @@ function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) 
   if (signBlob) {
     try {
       body.appendParagraph("手寫簽名：");
-      body.appendImage(signBlob).setWidth(220);
+      var img = body.appendImage(signBlob);
+      var iw = img.getWidth() || 1;
+      var ih = img.getHeight() || 1;
+      var scale = Math.min(380 / iw, 118 / ih);
+      img.setWidth(iw * scale);
+      img.setHeight(ih * scale);
     } catch (e) {}
   }
   doc.saveAndClose();

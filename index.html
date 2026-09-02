@@ -1450,7 +1450,7 @@
       if (step === 2) {
         requestAnimationFrame(() => {
           initPad();
-          resizeCanvas();
+          requestAnimationFrame(resizeCanvas);
         });
       }
       if (step === 3) fillSummary();
@@ -1489,16 +1489,33 @@
       const canvas = document.getElementById("signature");
       if (!canvas || !pad) return;
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width < 8 || rect.height < 8) return;
+      const w = Math.max(canvas.offsetWidth, canvas.getBoundingClientRect().width);
+      const h = Math.max(canvas.offsetHeight, canvas.getBoundingClientRect().height);
+      if (w < 8 || h < 8) return;
+      if (canvas.width === Math.floor(w * ratio) && canvas.height === Math.floor(h * ratio)) return;
       const data = pad.toData();
-      canvas.width = Math.floor(rect.width * ratio);
-      canvas.height = Math.floor(rect.height * ratio);
+      canvas.width = Math.floor(w * ratio);
+      canvas.height = Math.floor(h * ratio);
       const ctx = canvas.getContext("2d");
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(ratio, ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       pad.clear();
       if (data && data.length) pad.fromData(data);
+    }
+
+    function exportSignature() {
+      const src = document.getElementById("signature");
+      if (!src || !pad || pad.isEmpty()) return "";
+      const cssW = src.offsetWidth || src.getBoundingClientRect().width;
+      const cssH = src.offsetHeight || src.getBoundingClientRect().height;
+      const scale = 2;
+      const out = document.createElement("canvas");
+      out.width = Math.max(2, Math.round(cssW * scale));
+      out.height = Math.max(2, Math.round(cssH * scale));
+      const ctx = out.getContext("2d");
+      ctx.fillStyle = "#FFFAF5";
+      ctx.fillRect(0, 0, out.width, out.height);
+      ctx.drawImage(src, 0, 0, out.width, out.height);
+      return out.toDataURL("image/png");
     }
 
     window.addEventListener("resize", () => {
@@ -1647,7 +1664,7 @@
         const payload = {
           action: "submit",
           otp: val("otp"),
-          signatureDataUrl: pad.toDataURL("image/png"),
+          signatureDataUrl: exportSignature(),
           agreedToTerms: true,
           agreedAt: new Date().toISOString(),
           device: deviceInfo(),
