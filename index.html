@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="theme-color" content="#AC9D8D" />
+  <meta name="description" content="Nico Nico Pet House 尼口尼口寵物精緻美容旅館｜NicoPark 毛孩入園資料與電子簽署" />
+  <meta property="og:title" content="NicoPark 入園登記｜Nico Nico Pet House" />
+  <meta property="og:description" content="尼口尼口寵物精緻美容旅館｜毛孩入園資料、注意事項與電子簽署" />
+  <meta property="og:image" content="nico-nico-pet-house-logo.png" />
+  <title>NicoPark 入園登記｜Nico Nico Pet House</title>
+  <link rel="icon" type="image/png" href="nico-nico-pet-house-logo.png" />
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"></script>
+  <style>
+    :root {
+      --oat: #AC9D8D;
+      --oat-soft: #DDD0C3;
+      --milk: #E7D9CC;
+      --warm: #F8F3EC;
+      --paper: #FFFcf8;
+      --page: #F1E8DE;
+      --cocoa: #53453A;
+      --cocoa-deep: #3F332B;
+      --ink: #4A3C32;
+      --muted: #7A6B5E;
+      --line: color-mix(in srgb, var(--cocoa) 14%, transparent);
+      --ok: #5E6B52;
+      --danger: #9A5848;
+      --sign-bg: #fffaf5;
+      --radius-xs: 6px;
+      --radius-sm: 10px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 48px;
+      --font-display: "Iowan Old Style", "Palatino Linotype", "Songti TC", "LiSong Pro", "PMingLiU", serif;
+      --font-body: "PingFang TC", "Hiragino Sans", "Noto Sans TC", "Microsoft JhengHei", "Heiti TC", system-ui, sans-serif;
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: clamp(1.25rem, 1.05rem + 0.8vw, 1.6rem);
+      --leading: 1.55;
+      --shadow-border:
+        0 0 0 1px rgba(83, 69, 58, 0.07),
+        0 1px 2px -1px rgba(83, 69, 58, 0.06),
+        0 8px 24px -12px rgba(83, 69, 58, 0.12);
+      --shadow-border-hover:
+        0 0 0 1px rgba(83, 69, 58, 0.12),
+        0 1px 2px -1px rgba(83, 69, 58, 0.08),
+        0 10px 28px -12px rgba(83, 69, 58, 0.16);
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --motion-quick: 150ms;
+      --motion-fast: 250ms;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html {
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+    html, body { max-width: 100%; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: var(--leading);
+      color: var(--ink);
+      background: var(--page);
+      overflow-x: hidden;
+      padding-bottom: max(32px, env(safe-area-inset-bottom));
+    }
+    img { display: block; }
+    button, [role="button"] { cursor: pointer; }
+    button:disabled { cursor: not-allowed; }
+    [hidden] { display: none !important; }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 90% 50% at 8% -8%, rgba(172, 157, 141, 0.22), transparent 55%),
+        radial-gradient(ellipse 70% 40% at 100% 0%, rgba(231, 217, 204, 0.55), transparent 50%),
+        linear-gradient(180deg, #F7F1E8 0%, #EFE4D8 100%);
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(760px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 20px 0 40px;
+    }
+
+    .masthead {
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+    .logo-crop {
+      width: min(196px, 58vw);
+      height: 82px;
+      margin: 0 auto 10px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+    .logo-crop img {
+      height: 92px;
+      width: auto;
+      max-width: none;
+      object-fit: cover;
+      object-position: center 48%;
+    }
+    .brand-en {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: var(--text-xl);
+      letter-spacing: 0.04em;
+      color: var(--cocoa-deep);
+      margin: 0;
+      line-height: 1.2;
+      text-wrap: balance;
+    }
+    .brand-zh {
+      margin: 6px 0 0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      color: var(--cocoa);
+    }
+    .brand-sub {
+      margin: 8px 0 0;
+      font-size: var(--text-sm);
+      color: var(--muted);
+    }
+    .bone-rule {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 18px auto 0;
+      max-width: 280px;
+      color: var(--oat);
+    }
+    .bone-rule::before, .bone-rule::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--oat-soft);
+    }
+    .bone-rule svg { flex: none; }
+
+    .progress {
+      list-style: none;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0;
+      padding: 22px 2px 8px;
+      margin: 0;
+    }
+    .progress li {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      background: none;
+      border: 0;
+      font: inherit;
+      color: var(--muted);
+    }
+    .progress li:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 15px;
+      left: calc(50% + 18px);
+      right: calc(-50% + 18px);
+      height: 1px;
+      background: var(--oat-soft);
+      pointer-events: none;
+    }
+    .progress li.is-done:not(:last-child)::after,
+    .progress li.is-current:not(:last-child)::after {
+      background: var(--oat);
+    }
+    .progress .num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      background: var(--warm);
+      color: var(--muted);
+      box-shadow: 0 0 0 1px var(--oat-soft);
+      position: relative;
+      z-index: 1;
+    }
+    .progress li.is-current .num {
+      background: var(--cocoa);
+      color: var(--warm);
+      box-shadow: none;
+    }
+    .progress li.is-done .num {
+      background: var(--oat);
+      color: var(--warm);
+      box-shadow: none;
+    }
+    .progress .lab {
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      text-align: center;
+      line-height: 1.3;
+      max-width: 6.6em;
+      overflow: hidden;
+    }
+    .progress .lab .full { display: none; }
+    @media (min-width: 480px) {
+      .progress .lab { font-size: 0.8rem; max-width: none; }
+      .progress .lab .full { display: inline; }
+      .progress .lab .short { display: none; }
+    }
+    .progress li.is-current .lab { color: var(--cocoa); font-weight: 600; }
+    .progress li.is-done .lab { color: var(--cocoa); }
+    .progress li.can-jump { cursor: pointer; }
+    .progress li.can-jump:focus-visible .num {
+      outline: 2px solid var(--cocoa);
+      outline-offset: 2px;
+    }
+
+    .panel {
+      animation: panelIn var(--motion-fast) var(--ease-out);
+    }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--paper);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-border);
+      padding: 20px 18px 22px;
+      margin-top: 16px;
+    }
+    .card + .card { margin-top: 14px; }
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--cocoa-deep);
+      letter-spacing: 0.04em;
+      text-wrap: balance;
+    }
+    .card h2:focus { outline: none; }
+    .lede {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: var(--text-sm);
+    }
+    .card-kicker {
+      display: inline-block;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--oat);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .stack { display: flex; flex-direction: column; gap: 14px; }
+    .field label.main,
+    .field > label,
+    fieldset.field > legend {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--cocoa);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+    fieldset.field {
+      border: 0;
+      margin: 0;
+      padding: 0;
+      min-width: 0;
+    }
+    .req {
+      color: var(--danger);
+      font-weight: 500;
+      font-size: 0.72rem;
+      letter-spacing: 0;
+      margin-left: 4px;
+    }
+    .hint {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    input[type="text"],
+    input[type="tel"],
+    input[type="email"],
+    input[type="number"],
+    textarea,
+    .otp-input {
+      width: 100%;
+      height: 48px;
+      border: 0;
+      border-radius: var(--radius-md);
+      background: var(--warm);
+      color: var(--ink);
+      font: inherit;
+      padding: 0 14px;
+      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.08);
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    textarea {
+      height: auto;
+      min-height: 96px;
+      padding: 12px 14px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    input::placeholder, textarea::placeholder { color: #A8988A; }
+    input:focus, textarea:focus, .otp-input:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 1.5px var(--cocoa), 0 0 0 3px rgba(172, 157, 141, 0.28);
+      background: #fff;
+    }
+    input.is-invalid, textarea.is-invalid {
+      box-shadow: inset 0 0 0 1.5px var(--danger);
+    }
+    .suffix {
+      position: relative;
+    }
+    .suffix input { padding-right: 52px; }
+    .suffix span {
+      position: absolute;
+      right: 14px;
+      top: 0;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      pointer-events: none;
+    }
+    .error {
+      min-height: 0;
+      margin: 6px 0 0;
+      font-size: 0.75rem;
+      color: var(--danger);
+    }
+    .error:empty { display: none; }
+
+    .chips {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .chips.duo {
+      grid-template-columns: 1fr 1fr;
+    }
+    .choice {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 12px;
+      min-height: 48px;
+      border-radius: var(--radius-md);
+      background: var(--warm);
+      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.07);
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      color: var(--ink);
+    }
+    .choice input {
+      margin: 3px 0 0;
+      accent-color: var(--cocoa);
+      width: 16px;
+      height: 16px;
+      flex: none;
+    }
+    .choice:has(input:checked) {
+      background: color-mix(in srgb, var(--oat) 22%, var(--paper));
+      box-shadow: inset 0 0 0 1.5px var(--cocoa);
+    }
+    .choice:has(input:focus-visible) {
+      box-shadow: inset 0 0 0 1.5px var(--cocoa), 0 0 0 3px rgba(172, 157, 141, 0.28);
+    }
+    .reveal {
+      margin-top: 8px;
+    }
+
+    .banner {
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+    }
+    .banner.error {
+      background: color-mix(in srgb, var(--danger) 10%, var(--paper));
+      color: #7A3E32;
+    }
+    .banner.ok {
+      background: color-mix(in srgb, var(--ok) 12%, var(--paper));
+      color: var(--ok);
+    }
+
+    .terms {
+      max-height: min(52vh, 360px);
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding: 14px 14px 18px;
+      border-radius: var(--radius-lg);
+      background: var(--warm);
+      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.07);
+      font-size: 0.86rem;
+      color: var(--ink);
+      line-height: 1.7;
+    }
+    .terms h3 {
+      margin: 18px 0 8px;
+      font-size: 0.92rem;
+      color: var(--cocoa-deep);
+      letter-spacing: 0.04em;
+    }
+    .terms h3:first-child { margin-top: 0; }
+    .terms p, .terms li { margin: 0 0 8px; }
+    .terms ol { padding-left: 1.2em; margin: 0 0 8px; }
+    .terms-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      margin: 0 0 10px;
+      text-wrap: balance;
+    }
+
+    .agree {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: var(--warm);
+    }
+    .agree input {
+      margin-top: 3px;
+      accent-color: var(--cocoa);
+      width: 18px;
+      height: 18px;
+      flex: none;
+    }
+    .agree span { font-size: 0.88rem; }
+
+    .sign-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 18px 0 8px;
+    }
+    .sign-head p {
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--cocoa);
+    }
+    .sign-frame {
+      height: 168px;
+      width: 100%;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--sign-bg);
+      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.1);
+      position: relative;
+      touch-action: none;
+    }
+    .sign-frame canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .sign-hint {
+      margin: 8px 0 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .summary {
+      display: grid;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: var(--radius-lg);
+      background: var(--warm);
+      font-size: 0.9rem;
+    }
+    .summary div {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .summary dt { color: var(--muted); }
+    .summary dd { margin: 0; font-weight: 600; color: var(--cocoa-deep); }
+
+    .otp-input {
+      letter-spacing: 0.42em;
+      font-size: 1.45rem;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      height: 56px;
+      padding-left: 0.5em;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 18px;
+      position: sticky;
+      bottom: 0;
+      z-index: 4;
+      padding: 14px 0 calc(10px + env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, transparent 0%, var(--page) 32%);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      width: 100%;
+      padding: 12px 18px;
+      border: 0;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      transition: transform var(--motion-quick) var(--ease-out), background var(--motion-quick) var(--ease-out), box-shadow var(--motion-quick) var(--ease-out), color var(--motion-quick) var(--ease-out);
+    }
+    .btn:active:not(:disabled) { transform: scale(0.96); }
+    .btn-primary {
+      background: var(--cocoa);
+      color: var(--warm);
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--cocoa-deep); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--cocoa);
+      box-shadow: inset 0 0 0 1.5px var(--oat-soft);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--warm);
+    }
+    .btn-text {
+      background: transparent;
+      color: var(--muted);
+      min-height: 44px;
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      width: auto;
+      padding: 8px 4px;
+    }
+    .btn:disabled {
+      opacity: 0.55;
+    }
+
+    .success-card {
+      text-align: center;
+      padding: 28px 18px 26px;
+    }
+    .success-mark {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--ok) 16%, var(--paper));
+      color: var(--ok);
+      display: grid;
+      place-items: center;
+    }
+    .success-card h2 {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      margin: 0 0 8px;
+    }
+    .case-box {
+      margin: 18px 0;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: var(--warm);
+    }
+    .case-box span {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+    .case-box strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.15rem;
+      letter-spacing: 0.06em;
+      font-variant-numeric: tabular-nums;
+      color: var(--cocoa-deep);
+      word-break: break-all;
+    }
+    .pdf-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: var(--cocoa);
+      color: var(--warm);
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .site-foot {
+      text-align: center;
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    @media (min-width: 641px) {
+      .app { padding-top: 32px; width: min(760px, calc(100% - 48px)); }
+      .logo-crop { width: 228px; height: 96px; }
+      .logo-crop img { height: 108px; }
+      .card { padding: 28px 28px 26px; border-radius: 32px; }
+      .chips:not(.duo) { grid-template-columns: 1fr 1fr; }
+      .actions {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .actions .btn { width: auto; min-width: 168px; }
+      .actions .btn-primary { margin-left: auto; }
+      .sign-frame { height: 200px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .panel { animation: none; }
+      .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="masthead">
+      <div class="logo-crop">
+        <img src="nico-nico-pet-house-logo.png" alt="Nico Nico Pet House 標誌" width="228" height="96" />
+      </div>
+      <p class="brand-en">Nico Nico Pet House</p>
+      <p class="brand-zh">尼口尼口寵物精緻美容旅館</p>
+      <p class="brand-sub">NicoPark 毛孩入園資料與電子簽署</p>
+      <div class="bone-rule" aria-hidden="true">
+        <svg width="22" height="12" viewBox="0 0 22 12" fill="currentColor">
+          <path d="M4.2 1.2a2.4 2.4 0 0 0-2.4 2.4c0 .5.16.96.42 1.34A2.4 2.4 0 0 0 1.8 8.4a2.4 2.4 0 0 0 2.4 2.4c.7 0 1.32-.3 1.76-.77h10.08c.44.47 1.06.77 1.76.77a2.4 2.4 0 0 0 2.4-2.4 2.4 2.4 0 0 0-1.42-2.18c.26-.38.42-.84.42-1.34a2.4 2.4 0 0 0-2.4-2.4c-.7 0-1.32.3-1.76.77H7.96A2.38 2.38 0 0 0 6.2 1.2H4.2Z"/>
+        </svg>
+      </div>
+    </header>
+
+    <ol class="progress" aria-label="填寫進度">
+      <li class="is-current" data-step-tab="1">
+        <span class="num">1</span>
+        <span class="lab"><span class="short">資料</span><span class="full">毛孩與飼主資料</span></span>
+      </li>
+      <li data-step-tab="2">
+        <span class="num">2</span>
+        <span class="lab"><span class="short">簽署</span><span class="full">閱讀並簽署</span></span>
+      </li>
+      <li data-step-tab="3">
+        <span class="num">3</span>
+        <span class="lab"><span class="short">驗證</span><span class="full">手機驗證</span></span>
+      </li>
+    </ol>
+
+    <div id="live" class="sr-only" aria-live="polite"></div>
+
+    <form id="park-form" novalidate>
+      <section class="panel" id="step-1" data-panel="1">
+        <article class="card">
+          <span class="card-kicker">Step 01</span>
+          <h2 tabindex="-1">飼主聯絡資料</h2>
+          <p class="lede">請填寫主要聯絡人資料。手機號碼將於第三步進行簡訊驗證。</p>
+          <div id="banner-1"></div>
+          <div class="stack">
+            <div class="field">
+              <label for="ownerName">飼主名稱 <span class="req">必填</span></label>
+              <input id="ownerName" name="ownerName" type="text" autocomplete="name" maxlength="50" />
+              <p class="error" data-err="ownerName"></p>
+            </div>
+            <div class="field">
+              <label for="ownerPhone">聯絡電話 <span class="req">必填</span></label>
+              <input id="ownerPhone" name="ownerPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0912-345-678" />
+              <span class="hint">請填寫台灣手機號碼，將用於簡訊驗證</span>
+              <p class="error" data-err="ownerPhone"></p>
+            </div>
+            <div class="field">
+              <label for="ownerEmail">電子信箱 <span class="req">必填</span></label>
+              <input id="ownerEmail" name="ownerEmail" type="email" inputmode="email" autocomplete="email" maxlength="120" />
+              <p class="error" data-err="ownerEmail"></p>
+            </div>
+            <div class="field">
+              <label for="lineName">LINE 名稱 <span class="req">必填</span></label>
+              <input id="lineName" name="lineName" type="text" maxlength="50" />
+              <p class="error" data-err="lineName"></p>
+            </div>
+            <div class="field">
+              <label for="emergencyName">緊急聯絡人</label>
+              <input id="emergencyName" name="emergencyName" type="text" maxlength="50" />
+            </div>
+            <div class="field">
+              <label for="emergencyPhone">緊急聯絡人電話</label>
+              <input id="emergencyPhone" name="emergencyPhone" type="tel" inputmode="tel" maxlength="20" />
+              <p class="error" data-err="emergencyPhone"></p>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <span class="card-kicker">Step 01</span>
+          <h2>毛寶基本資料</h2>
+          <p class="lede">請填寫本次入園毛孩的基本資料。</p>
+          <div class="stack">
+            <div class="field">
+              <label for="petName">毛寶名字 <span class="req">必填</span></label>
+              <input id="petName" name="petName" type="text" maxlength="40" />
+              <p class="error" data-err="petName"></p>
+            </div>
+            <fieldset class="field">
+              <legend>性別 <span class="req">必填</span></legend>
+              <div class="chips duo">
+                <label class="choice"><input type="radio" name="petGender" value="男生" /> 男生</label>
+                <label class="choice"><input type="radio" name="petGender" value="女生" /> 女生</label>
+              </div>
+              <p class="error" data-err="petGender"></p>
+            </fieldset>
+            <div class="field">
+              <label for="petBreed">品種 <span class="req">必填</span></label>
+              <input id="petBreed" name="petBreed" type="text" maxlength="40" />
+              <p class="error" data-err="petBreed"></p>
+            </div>
+            <div class="field">
+              <label for="petAge">年齡 <span class="req">必填</span></label>
+              <input id="petAge" name="petAge" type="text" maxlength="30" placeholder="例如：3歲" />
+              <p class="error" data-err="petAge"></p>
+            </div>
+            <div class="field">
+              <label for="petWeight">體重 <span class="req">必填</span></label>
+              <div class="suffix">
+                <input id="petWeight" name="petWeight" type="number" inputmode="decimal" min="0.1" max="99" step="0.1" placeholder="0.0" />
+                <span>公斤</span>
+              </div>
+              <p class="error" data-err="petWeight"></p>
+            </div>
+            <fieldset class="field">
+              <legend>是否結紮 <span class="req">必填</span></legend>
+              <div class="chips duo">
+                <label class="choice"><input type="radio" name="neutered" value="是" /> 是</label>
+                <label class="choice"><input type="radio" name="neutered" value="否" /> 否</label>
+              </div>
+              <p class="error" data-err="neutered"></p>
+            </fieldset>
+            <fieldset class="field">
+              <legend>是否處於發情階段 <span class="req">必填</span></legend>
+              <div class="chips duo">
+                <label class="choice"><input type="radio" name="inHeat" value="是" /> 是</label>
+                <label class="choice"><input type="radio" name="inHeat" value="否" /> 否</label>
+              </div>
+              <p class="error" data-err="inHeat"></p>
+            </fieldset>
+          </div>
+        </article>
+
+        <article class="card">
+          <span class="card-kicker">Care</span>
+          <h2>個性、照護與健康狀況</h2>
+          <p class="lede">這些資訊能幫助我們更溫柔、安全地照顧毛孩。</p>
+          <div class="stack">
+            <fieldset class="field">
+              <legend>親狗親人</legend>
+              <div class="chips">
+                <label class="choice"><input type="radio" name="sociability" value="親狗親人" /> 親狗親人</label>
+                <label class="choice"><input type="radio" name="sociability" value="親狗不親人" /> 親狗不親人</label>
+                <label class="choice"><input type="radio" name="sociability" value="親人不親狗" /> 親人不親狗</label>
+                <label class="choice"><input type="radio" name="sociability" value="皆不親" /> 皆不親</label>
+              </div>
+            </fieldset>
+
+            <fieldset class="field">
+              <legend>是否有護食、護玩具或碰觸敏感部位低吼經驗</legend>
+              <div class="chips" id="guarding-group">
+                <label class="choice"><input type="checkbox" name="guarding" value="有護食、護玩具" /> 有護食、護玩具</label>
+                <label class="choice"><input type="checkbox" name="guarding" value="突然被觸碰敏感部位會低吼" /> 突然被觸碰敏感部位會低吼</label>
+                <label class="choice"><input type="checkbox" name="guarding" value="無此狀況" data-none="1" /> 無此狀況</label>
+                <label class="choice"><input type="checkbox" name="guarding" value="其他" data-reveal="guardingOtherWrap" /> 其他，可填寫</label>
+              </div>
+              <div class="reveal" id="guardingOtherWrap" hidden>
+                <label class="sr-only" for="guardingOther">其他說明</label>
+                <input id="guardingOther" name="guardingOther" type="text" maxlength="80" placeholder="請簡述其他狀況" />
+              </div>
+              <p class="error" data-err="guarding"></p>
+            </fieldset>
+
+            <fieldset class="field">
+              <legend>平時散步時牽繩狀況</legend>
+              <div class="chips">
+                <label class="choice"><input type="radio" name="leash" value="乖巧隨行" /> 乖巧隨行</label>
+                <label class="choice"><input type="radio" name="leash" value="會微微拉緊" /> 會微微拉緊</label>
+                <label class="choice"><input type="radio" name="leash" value="看到人車或貓狗會激動暴衝" /> 看到人車或貓狗會激動暴衝</label>
+              </div>
+            </fieldset>
+
+            <fieldset class="field">
+              <legend>是否有固定獸醫院</legend>
+              <div class="chips duo">
+                <label class="choice"><input type="radio" name="hasVet" value="是" data-reveal="vetWrap" /> 是</label>
+                <label class="choice"><input type="radio" name="hasVet" value="否" /> 否</label>
+              </div>
+              <div class="reveal" id="vetWrap" hidden>
+                <label for="vetInfo">獸醫院名稱與電話 <span class="req">必填</span></label>
+                <input id="vetInfo" name="vetInfo" type="text" maxlength="80" placeholder="院所名稱與電話" />
+              </div>
+              <p class="error" data-err="vetInfo"></p>
+            </fieldset>
+
+            <fieldset class="field">
+              <legend>近 14 天健康狀況 <span class="req">必填 · 可複選</span></legend>
+              <div class="chips" id="health-group">
+                <label class="choice"><input type="checkbox" name="health14" value="咳嗽" /> 咳嗽</label>
+                <label class="choice"><input type="checkbox" name="health14" value="嘔吐" /> 嘔吐</label>
+                <label class="choice"><input type="checkbox" name="health14" value="腹瀉" /> 腹瀉</label>
+                <label class="choice"><input type="checkbox" name="health14" value="食慾不佳" /> 食慾不佳</label>
+                <label class="choice"><input type="checkbox" name="health14" value="精神不佳" /> 精神不佳</label>
+                <label class="choice"><input type="checkbox" name="health14" value="發燒" /> 發燒</label>
+                <label class="choice"><input type="checkbox" name="health14" value="皮膚紅疹" /> 皮膚紅疹</label>
+                <label class="choice"><input type="checkbox" name="health14" value="掉毛異常" /> 掉毛異常</label>
+                <label class="choice"><input type="checkbox" name="health14" value="黴菌／皮膚病疑慮" /> 黴菌／皮膚病疑慮</label>
+                <label class="choice"><input type="checkbox" name="health14" value="跳蚤／壁蝨" /> 跳蚤／壁蝨</label>
+                <label class="choice"><input type="checkbox" name="health14" value="傷口" /> 傷口</label>
+                <label class="choice"><input type="checkbox" name="health14" value="術後恢復中" /> 術後恢復中</label>
+                <label class="choice"><input type="checkbox" name="health14" value="以上皆無" data-none="1" /> 以上皆無</label>
+              </div>
+              <p class="error" data-err="health14"></p>
+            </fieldset>
+
+            <fieldset class="field">
+              <legend>是否曾被獸醫診斷疾病 <span class="req">必填 · 可複選</span></legend>
+              <div class="chips" id="disease-group">
+                <label class="choice"><input type="checkbox" name="diseases" value="心臟病" /> 心臟病</label>
+                <label class="choice"><input type="checkbox" name="diseases" value="氣管塌陷" /> 氣管塌陷</label>
+                <label class="choice"><input type="checkbox" name="diseases" value="癲癇" /> 癲癇</label>
+                <label class="choice"><input type="checkbox" name="diseases" value="關節問題" /> 關節問題</label>
+                <label class="choice"><input type="checkbox" name="diseases" value="呼吸道疾病" /> 呼吸道疾病</label>
+                <label class="choice"><input type="checkbox" name="diseases" value="過敏" /> 過敏</label>
+                <label class="choice"><input type="checkbox" name="diseases" value="皮膚病" /> 皮膚病</label>
+                <label class="choice"><input type="checkbox" name="diseases" value="其他疾病" data-reveal="diseaseOtherWrap" /> 其他疾病</label>
+                <label class="choice"><input type="checkbox" name="diseases" value="以上皆無" data-none="1" /> 以上皆無</label>
+              </div>
+              <div class="reveal" id="diseaseOtherWrap" hidden>
+                <label class="sr-only" for="diseaseOther">其他疾病說明</label>
+                <input id="diseaseOther" name="diseaseOther" type="text" maxlength="80" placeholder="請填寫疾病名稱" />
+              </div>
+              <p class="error" data-err="diseases"></p>
+            </fieldset>
+
+            <fieldset class="field">
+              <legend>最近一次體內外驅蟲時間</legend>
+              <div class="chips">
+                <label class="choice"><input type="radio" name="deworm" value="半年內" /> 半年內</label>
+                <label class="choice"><input type="radio" name="deworm" value="一年" /> 一年</label>
+                <label class="choice"><input type="radio" name="deworm" value="不太確定" /> 不太確定</label>
+                <label class="choice"><input type="radio" name="deworm" value="其他" data-reveal="dewormOtherWrap" /> 其他並填寫</label>
+              </div>
+              <div class="reveal" id="dewormOtherWrap" hidden>
+                <label class="sr-only" for="dewormOther">其他驅蟲時間</label>
+                <input id="dewormOther" name="dewormOther" type="text" maxlength="80" placeholder="請填寫時間或說明" />
+              </div>
+              <p class="error" data-err="deworm"></p>
+            </fieldset>
+
+            <fieldset class="field">
+              <legend>是否固定施用滴劑或口服藥</legend>
+              <div class="chips">
+                <label class="choice"><input type="radio" name="preventative" value="是" /> 是</label>
+                <label class="choice"><input type="radio" name="preventative" value="否" /> 否</label>
+                <label class="choice"><input type="radio" name="preventative" value="其他" data-reveal="preventativeOtherWrap" /> 其他並填寫</label>
+              </div>
+              <div class="reveal" id="preventativeOtherWrap" hidden>
+                <label class="sr-only" for="preventativeOther">其他用藥說明</label>
+                <input id="preventativeOther" name="preventativeOther" type="text" maxlength="80" placeholder="請填寫藥品或說明" />
+              </div>
+              <p class="error" data-err="preventative"></p>
+            </fieldset>
+
+            <div class="field">
+              <label for="notes">注意事項／備註</label>
+              <textarea id="notes" name="notes" maxlength="500" placeholder="飲食禁忌、怕的事物、喜歡的安撫方式等"></textarea>
+            </div>
+          </div>
+        </article>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="to-step-2">下一步：閱讀並簽署</button>
+        </div>
+      </section>
+
+      <section class="panel" id="step-2" data-panel="2" hidden>
+        <article class="card">
+          <span class="card-kicker">Step 02</span>
+          <h2 tabindex="-1">定型化注意事項與電子簽署</h2>
+          <p class="lede">請滑動閱讀全部條款，勾選同意後於框內手寫簽名。</p>
+          <div id="banner-2"></div>
+
+          <div class="terms" id="terms-box" tabindex="0">
+            <p class="terms-title">NicoPark 毛孩入園注意事項、風險告知與個人資料蒐集告知</p>
+            <p>歡迎來到 Nico Nico Pet House（尼口尼口寵物精緻美容旅館）。為保障毛孩、飼主、其他入園毛孩與現場人員的安全與權益，請於入園前詳閱下列條款。完成勾選與手寫電子簽章，即表示您已充分理解並同意全部內容。</p>
+
+            <h3>一、資料真實與風險告知</h3>
+            <ol>
+              <li>您保證本表所填寫之飼主與毛孩資料均為真實、完整且最新。若因資料不實、缺漏或隱匿，導致毛孩、其他動物、人員或環境受有損害，您同意負擔相關責任。</li>
+              <li>寵物美容、旅館住宿與園區活動本質上存在一定風險，包含但不限於緊迫、抓傷、咬傷、皮膚敏感、舊疾誘發或個別體質反應。本館將盡善良管理人之注意義務，惟無法保證完全零風險。</li>
+              <li>請於入園前主動告知護食、護玩具、敏感部位、恐懼或攻擊傾向、傳染性疾病疑慮及其他照護注意事項，以便本館安排合適的照顧方式。</li>
+            </ol>
+
+            <h3>二、入園評估與服務調整</h3>
+            <ol>
+              <li>本館保有入園評估之權利。若現場觀察發現毛孩之健康、情緒、攻擊性、傳染疑慮或其他狀況不適於當日服務或與其他毛孩互動，本館得調整服務內容、改採隔離或單獨照護、暫停活動，或視情況拒絕、中止當日入園，並將盡速通知飼主。</li>
+              <li>美容、旅館與 NicoPark 活動之實際進行方式，得依毛孩當下狀態、天候、園區安全及現場人力作必要調整。</li>
+              <li>本表為入園資料與風險同意之紀錄，並非特定服務結果之保證。</li>
+            </ol>
+
+            <h3>三、健康與緊急醫療</h3>
+            <ol>
+              <li>近十四日若有咳嗽、嘔吐、腹瀉、精神或食慾不佳、皮膚病灶、寄生蟲、傷口、術後恢復或其他異常情形，請據實勾選。本館得要求提供獸醫證明，或建議延後入園。</li>
+              <li>入園期間如發現毛孩有緊急不適、創傷、傳染病疑慮或其他需立即處理之狀況，您同意本館得聯繫您本人或指定之緊急聯絡人，並得送至您填寫之固定獸醫院；若無法及時取得聯繫或未指定醫院，本館得送至就近合格動物醫療機構進行必要處置。</li>
+              <li>因此產生之醫療、交通及其他合理費用，由飼主負擔。本館將在合理範圍內盡速通知。</li>
+              <li>本館並非醫療機構，無法取代獸醫師之診斷或治療。</li>
+            </ol>
+
+            <h3>四、戶外活動風險</h3>
+            <ol>
+              <li>NicoPark 及相關戶外或半戶外活動，可能涉及與其他毛孩、人員及環境刺激（人、車、貓狗、氣味、聲音）之接觸。即使採取分組、牽繩、隔離或現場引導，仍可能發生追逐、吠叫、擦撞、緊迫或情緒反應。</li>
+              <li>您了解並同意：本館得依毛孩之牽繩狀況、社交性格與當日狀態，決定是否安排戶外活動、活動強度，以及是否改為室內或單獨照護。</li>
+              <li>請勿要求本館違反安全判斷進行活動。</li>
+            </ol>
+
+            <h3>五、電子文件與證據紀錄</h3>
+            <ol>
+              <li>您同意以電子文件、網頁表單與手寫電子簽章完成本次入園資料之簽署，其效力與紙本簽章相同。</li>
+              <li>您同意本館得保存本表內容、簽署時間、瀏覽器裝置資訊、簽名圖檔及簡訊驗證紀錄，作為服務聯繫、爭議釐清與法令遵循之證據。</li>
+              <li>案件識別碼與文件副本（如 PDF）將由本館系統產製並回傳提供，您可自行下載保存。識別碼不以本頁自行產生者為準。</li>
+            </ol>
+
+            <h3>六、個人資料蒐集告知</h3>
+            <ol>
+              <li>蒐集者：Nico Nico Pet House 尼口尼口寵物精緻美容旅館。</li>
+              <li>蒐集目的：毛孩入園評估與照護、客戶聯繫、緊急醫療聯繫、服務品質管理、客訴與帳務處理、法令遵循及爭議處理。</li>
+              <li>蒐集項目：飼主姓名、聯絡電話、電子信箱、LINE 名稱、緊急聯絡資料、毛孩基本資料與健康照護資訊、簽名圖檔、簡訊驗證紀錄及裝置資訊。</li>
+              <li>利用期間：服務期間及結束後，依法令或為主張／防禦權利所必要之合理保存期間。</li>
+              <li>利用地區：臺灣地區，以及為提供簡訊發送、雲端備份所必要之處理地。</li>
+              <li>利用對象：本館負責人及受託處理事務之人員、緊急醫療機構、依法有權機關。</li>
+              <li>利用方式：以電子或紙本方式為儲存、比對、傳遞與聯繫。</li>
+              <li>您得依《個人資料保護法》向本館查詢、請求閱覽、製給複製本、補充更正、請求停止蒐集處理利用或刪除。惟依法或為履行契約所必要之資料，本館得拒絕刪除。</li>
+              <li>若您不提供必要資料，或未完成條款同意、手寫簽署與手機驗證，本館將無法完成入園登記。</li>
+            </ol>
+
+            <h3>簽署聲明</h3>
+            <p>本人已詳細閱讀、理解並同意上述全部條款，並確認所填資料真實。本人同意以電子文件及手寫電子簽章完成簽署。</p>
+          </div>
+
+          <label class="agree">
+            <input type="checkbox" id="agreeTerms" name="agreeTerms" />
+            <span>本人已充分審閱並同意以電子文件與手寫電子簽章完成簽署。</span>
+          </label>
+          <p class="error" data-err="agreeTerms"></p>
+
+          <div class="sign-head">
+            <p>手寫電子簽章 <span class="req">必填</span></p>
+            <button type="button" class="btn btn-text" id="clear-sign">清除重簽</button>
+          </div>
+          <div class="sign-frame">
+            <canvas id="signature" width="640" height="200">您的瀏覽器不支援簽名板，請改用其他裝置。</canvas>
+          </div>
+          <p class="sign-hint">請以手指或觸控筆於框內簽名。行動裝置簽名時頁面不會跟著捲動。</p>
+          <p class="error" data-err="signature"></p>
+        </article>
+
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" id="back-1">返回上一步</button>
+          <button type="button" class="btn btn-primary" id="to-step-3">下一步：手機驗證</button>
+        </div>
+      </section>
+
+      <section class="panel" id="step-3" data-panel="3" hidden>
+        <article class="card">
+          <span class="card-kicker">Step 03</span>
+          <h2 tabindex="-1">手機簡訊驗證</h2>
+          <p class="lede">我們會將 6 位數驗證碼送到您在第一步填寫的手機號碼。</p>
+          <div id="banner-3"></div>
+          <div class="summary">
+            <div><dt>飼主</dt><dd id="sum-owner">—</dd></div>
+            <div><dt>毛寶</dt><dd id="sum-pet">—</dd></div>
+            <div><dt>驗證手機</dt><dd id="sum-phone">—</dd></div>
+          </div>
+          <div class="stack" style="margin-top:16px">
+            <div class="field">
+              <label for="otp">6 位數驗證碼 <span class="req">必填</span></label>
+              <input id="otp" name="otp" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="••••••" />
+              <p class="error" data-err="otp"></p>
+            </div>
+            <button type="button" class="btn btn-ghost" id="send-otp">發送驗證碼</button>
+          </div>
+        </article>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" id="back-2">返回上一步</button>
+          <button type="button" class="btn btn-primary" id="submit-form">確認送出入園資料</button>
+        </div>
+      </section>
+    </form>
+
+    <section class="panel" id="step-success" data-panel="success" hidden>
+      <article class="card success-card">
+        <div class="success-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 9.5 17 19 7"/></svg>
+        </div>
+        <h2 tabindex="-1" id="success-title">入園資料已送出</h2>
+        <p class="lede" id="success-msg">我們已收到毛孩的資料與簽署文件，Nico Nico 將盡快與您聯繫。</p>
+        <div class="case-box" id="case-box" hidden>
+          <span>案件識別碼</span>
+          <strong id="case-id"></strong>
+        </div>
+        <a class="pdf-link" id="pdf-link" hidden target="_blank" rel="noopener noreferrer">下載入園資料副本（PDF）</a>
+      </article>
+    </section>
+
+    <footer class="site-foot">Nico Nico Pet House　尼口尼口寵物精緻美容旅館</footer>
+  </div>
+
+  <script>
+  (function () {
+    /**
+     * 請將 Google Apps Script Web App 部署後的 /exec 網址貼在下方。
+     * 範例：https://script.google.com/macros/s/XXXX/exec
+     * 請勿在前端放入三竹簡訊帳密、API Key 或 Google 憑證。
+     */
+    const GAS_WEB_APP_URL = "";
+
+    const DRAFT_KEY = "nicopark-draft-v1";
+    const FETCH_MS = 28000;
+    const OTP_SEC = 60;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const $ = (sel, root) => (root || document).querySelector(sel);
+    const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+    class AppError extends Error {
+      constructor(message) { super(message); this.name = "AppError"; }
+    }
+
+    let current = 1;
+    let pad = null;
+    let otpLeft = 0;
+    let otpTimer = null;
+    let sending = false;
+    let submitting = false;
+    let maxReached = 1;
+
+    function val(id) {
+      const el = document.getElementById(id);
+      return el ? String(el.value || "").trim() : "";
+    }
+    function radio(name) {
+      const el = document.querySelector(`input[name="${name}"]:checked`);
+      return el ? el.value : "";
+    }
+    function checks(name) {
+      return $$("input[name=\"" + name + "\"]:checked").map((e) => e.value);
+    }
+    function setChecked(name, values) {
+      const set = new Set(Array.isArray(values) ? values : values ? [values] : []);
+      $$("input[name=\"" + name + "\"]").forEach((el) => {
+        if (el.type === "radio") el.checked = set.has(el.value);
+        else el.checked = set.has(el.value);
+      });
+    }
+
+    function digitsOnly(s) { return String(s || "").replace(/\D/g, ""); }
+
+    function normalizeTwMobile(raw) {
+      let s = String(raw || "").replace(/[^\d+]/g, "");
+      if (s.startsWith("+")) s = s.slice(1);
+      if (s.startsWith("8860")) s = s.slice(3);
+      else if (s.startsWith("886")) s = "0" + s.slice(3);
+      if (/^9\d{8}$/.test(s)) s = "0" + s;
+      if (/^09\d{8}$/.test(s)) return s;
+      return null;
+    }
+    function toE164(n09) { return n09 ? "+886" + n09.slice(1) : ""; }
+    function prettyPhone(n09) {
+      if (!n09) return "";
+      return n09.replace(/^(09\d{2})(\d{3})(\d{3})$/, "$1-$2-$3");
+    }
+
+    function announce(msg) {
+      const live = document.getElementById("live");
+      if (live) live.textContent = msg || "";
+    }
+
+    function clearErrors(scope) {
+      const root = scope ? document.getElementById(scope) : document;
+      $$(".error", root).forEach((el) => { el.textContent = ""; });
+      $$(".is-invalid", root).forEach((el) => el.classList.remove("is-invalid"));
+      $$(".banner", root).forEach((el) => el.remove());
+    }
+
+    function setErr(key, msg) {
+      const box = document.querySelector("[data-err=\"" + key + "\"]");
+      if (box) box.textContent = msg || "";
+      const field = document.getElementById(key);
+      if (field) {
+        field.classList.toggle("is-invalid", !!msg);
+        field.setAttribute("aria-invalid", msg ? "true" : "false");
+      }
+    }
+
+    function showBanner(step, msg, kind) {
+      const host = document.getElementById("banner-" + step);
+      if (!host) return;
+      host.innerHTML = "";
+      if (!msg) return;
+      const div = document.createElement("div");
+      div.className = "banner " + (kind || "error");
+      div.textContent = msg;
+      host.appendChild(div);
+      announce(msg);
+    }
+
+    function firstErrorFocus(scope) {
+      const root = document.getElementById(scope) || document;
+      const invalid = root.querySelector(".is-invalid, .error:not(:empty)");
+      if (!invalid) return;
+      const field = invalid.classList.contains("is-invalid")
+        ? invalid
+        : root.querySelector("#" + (invalid.getAttribute("data-err") || ""));
+      const target = field || invalid;
+      target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+      if (field && typeof field.focus === "function") {
+        try { field.focus({ preventScroll: true }); } catch (e) { field.focus(); }
+      }
+    }
+
+    function bindExclusive(name) {
+      const boxes = $$("input[name=\"" + name + "\"]");
+      boxes.forEach((box) => {
+        box.addEventListener("change", () => {
+          if (!box.checked) return;
+          if (box.getAttribute("data-none") === "1") {
+            boxes.forEach((b) => { if (b !== box) b.checked = false; });
+          } else {
+            boxes.forEach((b) => {
+              if (b.getAttribute("data-none") === "1") b.checked = false;
+            });
+          }
+          syncReveals();
+        });
+      });
+    }
+
+    function syncReveals() {
+      $$("[data-reveal]").forEach((input) => {
+        const wrap = document.getElementById(input.getAttribute("data-reveal"));
+        if (!wrap) return;
+        if (input.type === "radio") {
+          const on = input.checked;
+          if (on) wrap.hidden = false;
+          else {
+            const still = $$("input[name=\"" + input.name + "\"]").some(
+              (el) => el.checked && el.getAttribute("data-reveal") === input.getAttribute("data-reveal")
+            );
+            if (!still) wrap.hidden = true;
+          }
+        } else {
+          wrap.hidden = !input.checked;
+        }
+      });
+    }
+
+    $$("[data-reveal]").forEach((input) => {
+      input.addEventListener("change", syncReveals);
+    });
+    $$("input[name='hasVet'], input[name='deworm'], input[name='preventative']").forEach((el) => {
+      el.addEventListener("change", syncReveals);
+    });
+    bindExclusive("guarding");
+    bindExclusive("health14");
+    bindExclusive("diseases");
+
+    function collectForm() {
+      const phone = normalizeTwMobile(val("ownerPhone"));
+      return {
+        owner: {
+          name: val("ownerName"),
+          phone: phone || val("ownerPhone"),
+          phoneE164: toE164(phone),
+          email: val("ownerEmail"),
+          lineName: val("lineName"),
+          emergencyName: val("emergencyName"),
+          emergencyPhone: val("emergencyPhone")
+        },
+        pet: {
+          name: val("petName"),
+          gender: radio("petGender"),
+          breed: val("petBreed"),
+          age: val("petAge"),
+          weightKg: val("petWeight"),
+          neutered: radio("neutered"),
+          inHeat: radio("inHeat")
+        },
+        care: {
+          sociability: radio("sociability"),
+          guarding: checks("guarding"),
+          guardingOther: val("guardingOther"),
+          leash: radio("leash"),
+          hasVet: radio("hasVet"),
+          vetInfo: val("vetInfo"),
+          health14: checks("health14"),
+          diseases: checks("diseases"),
+          diseaseOther: val("diseaseOther"),
+          deworm: radio("deworm"),
+          dewormOther: val("dewormOther"),
+          preventative: radio("preventative"),
+          preventativeOther: val("preventativeOther"),
+          notes: val("notes")
+        }
+      };
+    }
+
+    function saveDraft() {
+      try {
+        const data = collectForm();
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+      } catch (e) { /* ignore quota */ }
+    }
+
+    function restoreDraft() {
+      try {
+        const raw = sessionStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        const o = data.owner || {};
+        const p = data.pet || {};
+        const c = data.care || {};
+        const fill = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+        fill("ownerName", o.name);
+        fill("ownerPhone", o.phone);
+        fill("ownerEmail", o.email);
+        fill("lineName", o.lineName);
+        fill("emergencyName", o.emergencyName);
+        fill("emergencyPhone", o.emergencyPhone);
+        fill("petName", p.name);
+        fill("petBreed", p.breed);
+        fill("petAge", p.age);
+        fill("petWeight", p.weightKg);
+        fill("vetInfo", c.vetInfo);
+        fill("guardingOther", c.guardingOther);
+        fill("diseaseOther", c.diseaseOther);
+        fill("dewormOther", c.dewormOther);
+        fill("preventativeOther", c.preventativeOther);
+        fill("notes", c.notes);
+        setChecked("petGender", p.gender);
+        setChecked("neutered", p.neutered);
+        setChecked("inHeat", p.inHeat);
+        setChecked("sociability", c.sociability);
+        setChecked("guarding", c.guarding);
+        setChecked("leash", c.leash);
+        setChecked("hasVet", c.hasVet);
+        setChecked("health14", c.health14);
+        setChecked("diseases", c.diseases);
+        setChecked("deworm", c.deworm);
+        setChecked("preventative", c.preventative);
+        syncReveals();
+      } catch (e) { /* ignore */ }
+    }
+
+    function emailOk(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+
+    function validateStep1() {
+      clearErrors("step-1");
+      let ok = true;
+      const need = (key, cond, msg) => {
+        if (!cond) { setErr(key, msg); ok = false; }
+      };
+      need("ownerName", val("ownerName").length >= 1, "請填寫飼主名稱");
+      const phone = normalizeTwMobile(val("ownerPhone"));
+      need("ownerPhone", !!phone, "請填寫有效的台灣手機號碼（09 開頭 10 碼）");
+      need("ownerEmail", emailOk(val("ownerEmail")), "請填寫有效的電子信箱");
+      need("lineName", val("lineName").length >= 1, "請填寫 LINE 名稱");
+      if (val("emergencyPhone")) {
+        const d = digitsOnly(val("emergencyPhone"));
+        need("emergencyPhone", d.length >= 8 && d.length <= 15, "請確認緊急聯絡人電話格式");
+      }
+      need("petName", val("petName").length >= 1, "請填寫毛寶名字");
+      need("petGender", !!radio("petGender"), "請選擇性別");
+      need("petBreed", val("petBreed").length >= 1, "請填寫品種");
+      need("petAge", val("petAge").length >= 1, "請填寫年齡");
+      const w = parseFloat(String(val("petWeight")).replace(",", "."));
+      need("petWeight", Number.isFinite(w) && w >= 0.1 && w <= 99, "請填寫體重（公斤）");
+      need("neutered", !!radio("neutered"), "請選擇是否結紮");
+      need("inHeat", !!radio("inHeat"), "請選擇是否處於發情階段");
+      if (checks("guarding").includes("其他") && !val("guardingOther")) {
+        setErr("guarding", "請填寫其他狀況");
+        ok = false;
+      }
+      if (radio("hasVet") === "是" && !val("vetInfo")) {
+        setErr("vetInfo", "請填寫獸醫院名稱與電話");
+        ok = false;
+      }
+      if (!checks("health14").length) {
+        setErr("health14", "請至少勾選一項近 14 天健康狀況");
+        ok = false;
+      }
+      const dis = checks("diseases");
+      if (!dis.length) {
+        setErr("diseases", "請至少勾選一項疾病紀錄");
+        ok = false;
+      } else if (dis.includes("其他疾病") && !val("diseaseOther")) {
+        setErr("diseases", "請填寫其他疾病名稱");
+        ok = false;
+      }
+      if (radio("deworm") === "其他" && !val("dewormOther")) {
+        setErr("deworm", "請填寫其他驅蟲時間");
+        ok = false;
+      }
+      if (radio("preventative") === "其他" && !val("preventativeOther")) {
+        setErr("preventative", "請填寫其他用藥說明");
+        ok = false;
+      }
+      if (!ok) firstErrorFocus("step-1");
+      return ok;
+    }
+
+    function signatureReady() {
+      return !!(pad && !pad.isEmpty());
+    }
+
+    function validateStep2() {
+      clearErrors("step-2");
+      let ok = true;
+      if (!$("#agreeTerms").checked) {
+        setErr("agreeTerms", "請勾選同意以電子文件與手寫電子簽章完成簽署");
+        ok = false;
+      }
+      if (typeof SignaturePad === "undefined") {
+        setErr("signature", "簽名功能尚未載入，請重新整理頁面");
+        ok = false;
+      } else if (!signatureReady()) {
+        setErr("signature", "請於框內完成手寫簽名");
+        ok = false;
+      }
+      if (!ok) firstErrorFocus("step-2");
+      return ok;
+    }
+
+    function validateOtp() {
+      const otp = val("otp");
+      if (!/^\d{6}$/.test(otp)) {
+        setErr("otp", "請輸入 6 位數驗證碼");
+        return false;
+      }
+      setErr("otp", "");
+      return true;
+    }
+
+    function goTop() {
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+    }
+
+    function setProgress(step) {
+      $$("[data-step-tab]").forEach((li) => {
+        const n = Number(li.getAttribute("data-step-tab"));
+        li.classList.toggle("is-current", n === step);
+        li.classList.toggle("is-done", n < step);
+        li.classList.toggle("can-jump", n <= maxReached && n !== step);
+        li.setAttribute("aria-current", n === step ? "step" : "false");
+      });
+    }
+
+    function showPanel(step) {
+      current = step;
+      if (step > maxReached) maxReached = step;
+      $$("[data-panel]").forEach((p) => {
+        p.hidden = p.getAttribute("data-panel") !== String(step);
+      });
+      setProgress(step === "success" ? 3 : step);
+      const panel = document.querySelector("[data-panel=\"" + step + "\"]");
+      const heading = panel && panel.querySelector("h2");
+      goTop();
+      if (heading) {
+        setTimeout(() => { try { heading.focus({ preventScroll: true }); } catch (e) { heading.focus(); } }, 50);
+      }
+      if (step === 2) {
+        requestAnimationFrame(() => {
+          initPad();
+          resizeCanvas();
+        });
+      }
+      if (step === 3) fillSummary();
+      announce("目前步驟 " + step);
+    }
+
+    function fillSummary() {
+      const phone = normalizeTwMobile(val("ownerPhone"));
+      $("#sum-owner").textContent = val("ownerName") || "—";
+      $("#sum-pet").textContent = val("petName") || "—";
+      $("#sum-phone").textContent = phone ? prettyPhone(phone) : val("ownerPhone") || "—";
+    }
+
+    function initPad() {
+      const canvas = document.getElementById("signature");
+      if (!canvas) return;
+      if (typeof SignaturePad === "undefined") {
+        showBanner(2, "簽名功能載入失敗，請重新整理頁面後再試。");
+        return;
+      }
+      if (!pad) {
+        pad = new SignaturePad(canvas, {
+          minWidth: 0.55,
+          maxWidth: 2.1,
+          penColor: "rgb(83, 69, 58)",
+          backgroundColor: "rgb(255, 250, 245)",
+          throttle: 8
+        });
+        try { pad.addEventListener("endStroke", () => setErr("signature", "")); } catch (e) { /* older pad */ }
+        canvas.addEventListener("touchmove", (ev) => ev.preventDefault(), { passive: false });
+      }
+    }
+
+    function resizeCanvas() {
+      const canvas = document.getElementById("signature");
+      if (!canvas || !pad) return;
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width < 8 || rect.height < 8) return;
+      const data = pad.toData();
+      canvas.width = Math.floor(rect.width * ratio);
+      canvas.height = Math.floor(rect.height * ratio);
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(ratio, ratio);
+      pad.clear();
+      if (data && data.length) pad.fromData(data);
+    }
+
+    window.addEventListener("resize", () => {
+      if (current === 2) resizeCanvas();
+    });
+
+    function gasConfigured() {
+      const u = String(GAS_WEB_APP_URL || "").trim();
+      return /^https:\/\//i.test(u);
+    }
+
+    async function callGas(payload) {
+      if (!gasConfigured()) {
+        throw new AppError("尚未設定送出網址。請將 Google Apps Script Web App 的 /exec 網址貼到頁面中的 GAS_WEB_APP_URL 後再試。");
+      }
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), FETCH_MS);
+      try {
+        const res = await fetch(GAS_WEB_APP_URL.trim(), {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: JSON.stringify(payload),
+          redirect: "follow",
+          signal: controller.signal
+        });
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new AppError("伺服器回傳格式異常，請稍後再試或聯絡旅館人員。");
+        }
+        if (data && (data.success === false || data.ok === false || data.status === "error")) {
+          throw new AppError(data.message || data.error || "操作未完成，請稍後再試。");
+        }
+        if (!res.ok) {
+          throw new AppError((data && (data.message || data.error)) || "伺服器暫時無法處理，請稍後再試。");
+        }
+        return data;
+      } catch (err) {
+        if (err instanceof AppError) throw err;
+        if (err && err.name === "AbortError") {
+          throw new AppError("連線逾時，請稍後再試一次。");
+        }
+        throw new AppError("無法連線到伺服器，請確認網路連線後再試一次。");
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function deviceInfo() {
+      return {
+        userAgent: navigator.userAgent || "",
+        language: navigator.language || "",
+        languages: Array.isArray(navigator.languages) ? navigator.languages.join(",") : "",
+        platform: navigator.platform || "",
+        vendor: navigator.vendor || "",
+        screen: window.screen ? (window.screen.width + "x" + window.screen.height) : "",
+        viewport: window.innerWidth + "x" + window.innerHeight,
+        pixelRatio: window.devicePixelRatio || 1,
+        timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone) || "",
+        timezoneOffset: new Date().getTimezoneOffset(),
+        touch: "ontouchstart" in window,
+        submittedAt: new Date().toISOString()
+      };
+    }
+
+    function startOtpCountdown() {
+      otpLeft = OTP_SEC;
+      const btn = document.getElementById("send-otp");
+      btn.disabled = true;
+      const tick = () => {
+        if (otpLeft <= 0) {
+          clearInterval(otpTimer);
+          otpTimer = null;
+          btn.disabled = false;
+          btn.textContent = "重新發送驗證碼";
+          return;
+        }
+        btn.textContent = "請稍候 " + otpLeft + " 秒";
+        otpLeft -= 1;
+      };
+      tick();
+      otpTimer = setInterval(tick, 1000);
+    }
+
+    async function sendOtp() {
+      clearErrors("step-3");
+      const phone = normalizeTwMobile(val("ownerPhone"));
+      if (!phone) {
+        showBanner(3, "找不到有效的手機號碼，請返回第一步確認。");
+        return;
+      }
+      if (sending || otpLeft > 0) return;
+      sending = true;
+      const btn = document.getElementById("send-otp");
+      btn.disabled = true;
+      btn.textContent = "發送中…";
+      try {
+        await callGas({
+          action: "sendOtp",
+          phone: phone,
+          phoneE164: toE164(phone)
+        });
+        showBanner(3, "驗證碼已送出，請查看手機簡訊。", "ok");
+        startOtpCountdown();
+        document.getElementById("otp").focus();
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = "發送驗證碼";
+        showBanner(3, err.message || "驗證碼發送失敗，請稍後再試。");
+      } finally {
+        sending = false;
+      }
+    }
+
+    function pick(obj, keys) {
+      if (!obj || typeof obj !== "object") return "";
+      for (const k of keys) {
+        if (obj[k]) return String(obj[k]);
+      }
+      return "";
+    }
+
+    async function submitAll() {
+      if (submitting) return;
+      clearErrors("step-3");
+      if (!validateStep1()) { showPanel(1); return; }
+      if (!validateStep2()) { showPanel(2); return; }
+      if (!validateOtp()) { firstErrorFocus("step-3"); return; }
+      if (!$("#agreeTerms").checked || !signatureReady()) {
+        showPanel(2);
+        validateStep2();
+        return;
+      }
+      submitting = true;
+      const btn = document.getElementById("submit-form");
+      btn.disabled = true;
+      btn.textContent = "送出中…";
+      try {
+        const payload = {
+          action: "submit",
+          otp: val("otp"),
+          signatureDataUrl: pad.toDataURL("image/png"),
+          agreedToTerms: true,
+          agreedAt: new Date().toISOString(),
+          device: deviceInfo(),
+          form: collectForm()
+        };
+        const data = await callGas(payload);
+        const caseId = pick(data, ["caseId", "case_id", "recordId", "ticketId", "id"]);
+        const pdfUrl = pick(data, ["pdfUrl", "pdf_url", "pdf"]);
+        const message = pick(data, ["message", "msg"]);
+        showSuccess({ caseId, pdfUrl, message });
+        try { sessionStorage.removeItem(DRAFT_KEY); } catch (e) { /* ignore */ }
+      } catch (err) {
+        showBanner(3, err.message || "送出失敗，請稍後再試。");
+      } finally {
+        submitting = false;
+        btn.disabled = false;
+        btn.textContent = "確認送出入園資料";
+      }
+    }
+
+    function showSuccess(info) {
+      document.getElementById("park-form").hidden = true;
+      $$("[data-step-tab]").forEach((li) => {
+        li.classList.add("is-done");
+        li.classList.remove("is-current", "can-jump");
+      });
+      const panel = document.getElementById("step-success");
+      panel.hidden = false;
+      if (info.message) document.getElementById("success-msg").textContent = info.message;
+      if (info.caseId) {
+        document.getElementById("case-box").hidden = false;
+        document.getElementById("case-id").textContent = info.caseId;
+      }
+      const link = document.getElementById("pdf-link");
+      if (info.pdfUrl && /^https?:\/\//i.test(info.pdfUrl)) {
+        link.hidden = false;
+        link.href = info.pdfUrl;
+      }
+      current = "success";
+      goTop();
+      const h = document.getElementById("success-title");
+      if (h) try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); }
+      announce("入園資料已成功送出");
+    }
+
+    document.getElementById("to-step-2").addEventListener("click", () => {
+      if (validateStep1()) { saveDraft(); showPanel(2); }
+    });
+    document.getElementById("to-step-3").addEventListener("click", () => {
+      if (validateStep2()) showPanel(3);
+    });
+    document.getElementById("back-1").addEventListener("click", () => showPanel(1));
+    document.getElementById("back-2").addEventListener("click", () => showPanel(2));
+    document.getElementById("clear-sign").addEventListener("click", () => {
+      if (pad) pad.clear();
+      setErr("signature", "");
+    });
+    document.getElementById("send-otp").addEventListener("click", sendOtp);
+    document.getElementById("submit-form").addEventListener("click", submitAll);
+    document.getElementById("park-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (current === 1) document.getElementById("to-step-2").click();
+      else if (current === 2) document.getElementById("to-step-3").click();
+      else if (current === 3) submitAll();
+    });
+    document.getElementById("otp").addEventListener("input", (e) => {
+      e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
+    });
+
+    $$("[data-step-tab]").forEach((li) => {
+      li.setAttribute("role", "button");
+      li.tabIndex = 0;
+      const jump = () => {
+        const n = Number(li.getAttribute("data-step-tab"));
+        if (current === "success") return;
+        if (n === current) return;
+        if (n > current) {
+          if (current === 1 && !validateStep1()) return;
+          if (n === 3 && current <= 2 && !validateStep2()) return;
+          if (n === 3 && current === 1 && !(validateStep1() && validateStep2())) return;
+        }
+        if (n < current || n <= maxReached) showPanel(n);
+      };
+      li.addEventListener("click", jump);
+      li.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jump(); }
+      });
+    });
+
+    document.getElementById("park-form").addEventListener("change", saveDraft);
+    document.getElementById("park-form").addEventListener("input", () => {
+      window.clearTimeout(document.getElementById("park-form")._t);
+      document.getElementById("park-form")._t = setTimeout(saveDraft, 400);
+    });
+
+    restoreDraft();
+    syncReveals();
+    showPanel(1);
+  })();
+  </script>
+</body>
+</html>
