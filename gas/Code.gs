@@ -178,7 +178,6 @@ function submit_(payload) {
       ? "入園資料已送出（" + names.join("、") + "）。副本已寄到 " + owner.email + "。"
       : "入園資料已送出（" + names.join("、") + "）。案件與 PDF 已存檔；目前 Google 寄信受限，請用案件查詢或雲端連結取得副本。"
   };
-  };
 }
 
 function lookup_(payload) {
