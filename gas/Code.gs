@@ -49,6 +49,7 @@ function doPost(e) {
     var action = String(payload.action || "");
     if (action === "sendOtp") return json_(sendOtp_(payload));
     if (action === "submit") return json_(submit_(payload));
+    if (action === "lookup") return json_(lookup_(payload));
     return json_({ success: false, message: "未知的操作，請重新整理頁面後再試。" });
   } catch (err) {
     return json_({ success: false, message: friendlyErr_(err) });
@@ -62,19 +63,28 @@ function sendOtp_(payload) {
   if (!/^09\d{8}$/.test(phone)) {
     throw new Error("手機號碼格式不正確。");
   }
+  var cache = CacheService.getScriptCache();
+  if (cache.get("otp_sent_" + phone)) {
+    throw new Error("請稍候再重新發送驗證碼。");
+  }
   var email = String(payload.email || "").trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new Error("找不到電子信箱，請返回第一步確認。");
+    email = findEmailByPhone_(phone);
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error(payload.purpose === "lookup"
+      ? "找不到此手機的入園紀錄，請確認號碼或先完成登記。"
+      : "找不到電子信箱，請返回第一步確認。");
   }
   var code = "";
   for (var i = 0; i < 6; i++) code += String(Math.floor(Math.random() * 10));
-  var cache = CacheService.getScriptCache();
   cache.put("otp_" + phone, JSON.stringify({
     code: code,
     email: email,
     exp: Date.now() + CONFIG.OTP_TTL_SEC * 1000,
     tries: 0
   }), CONFIG.OTP_TTL_SEC);
+  cache.put("otp_sent_" + phone, "1", 60);
 
   MailApp.sendEmail({
     to: email,
@@ -91,11 +101,21 @@ function sendOtp_(payload) {
   return { success: true, channel: "email" };
 }
 
+function petsOf_(form) {
+  if (form.pets && form.pets.length) {
+    return form.pets.map(function (p) {
+      return { pet: p, care: p };
+    });
+  }
+  if (form.pet) return [{ pet: form.pet, care: form.care || {} }];
+  return [];
+}
+
 function submit_(payload) {
   var form = payload.form || {};
   var owner = form.owner || {};
-  var pet = form.pet || {};
-  var care = form.care || {};
+  var list = petsOf_(form);
+  if (!list.length) throw new Error("請至少填寫一隻毛孩的資料。");
   var phone = String(owner.phone || "").replace(/\D/g, "");
   if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
   verifyOtp_(phone, String(payload.otp || ""));
@@ -106,25 +126,31 @@ function submit_(payload) {
   var caseId = makeCaseId_();
   var now = new Date();
   var tzNow = Utilities.formatDate(now, "Asia/Taipei", "yyyy-MM-dd HH:mm:ss");
+  var names = list.map(function (x) { return x.pet && x.pet.name; }).filter(function (n) { return n; });
+  var folderLabel = names.length > 1
+    ? safeName_(names[0]) + "等" + names.length + "隻"
+    : safeName_(names[0] || "毛孩");
 
   var folder = getRootFolder_();
   var caseFolder = folder.createFolder(
-    caseId + "_" + safeName_(pet.name || "毛孩") + "_" + Utilities.formatDate(now, "Asia/Taipei", "yyyyMMdd")
+    caseId + "_" + folderLabel + "_" + Utilities.formatDate(now, "Asia/Taipei", "yyyyMMdd")
   );
 
   var signBlob = dataUrlToBlob_(payload.signatureDataUrl, caseId + "_簽名.png");
   var signFile = caseFolder.createFile(signBlob);
 
-  var pdfFile = createPdf_(caseFolder, caseId, tzNow, owner, pet, care, payload, signBlob);
+  var pdfFile = createPdf_(caseFolder, caseId, tzNow, owner, list, payload, signBlob);
 
   try { pdfFile.addViewer(String(owner.email || "")); } catch (e1) {}
   try { signFile.addViewer(String(owner.email || "")); } catch (e2) {}
 
-  appendRow_(caseId, tzNow, owner, pet, care, payload, caseFolder.getUrl(), pdfFile.getUrl(), signFile.getUrl());
+  list.forEach(function (item) {
+    appendRow_(caseId, tzNow, owner, item.pet, item.care, payload, caseFolder.getUrl(), pdfFile.getUrl(), signFile.getUrl());
+  });
 
-  sendCustomerMail_(owner, pet, caseId, pdfFile, caseFolder.getUrl());
+  sendCustomerMail_(owner, names, caseId, pdfFile);
   if (CONFIG.BUSINESS_EMAIL) {
-    sendBusinessMail_(owner, pet, caseId, pdfFile, caseFolder.getUrl());
+    sendBusinessMail_(owner, names, caseId, pdfFile, caseFolder.getUrl());
   }
 
   consumeOtp_(phone);
@@ -133,8 +159,54 @@ function submit_(payload) {
     success: true,
     caseId: caseId,
     pdfUrl: pdfFile.getUrl(),
-    message: "入園資料已送出。副本已寄到 " + owner.email + "，Nico Nico 也已存入雲端與登記表。"
+    message: "入園資料已送出（" + names.join("、") + "）。副本已寄到 " + owner.email + "。"
   };
+}
+
+function lookup_(payload) {
+  var phone = String(payload.phone || "").replace(/\D/g, "");
+  if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
+  verifyOtp_(phone, String(payload.otp || ""));
+  var sh = getSheet_();
+  var values = sh.getDataRange().getDisplayValues();
+  var map = {};
+  var order = [];
+  for (var r = values.length - 1; r >= 1; r--) {
+    var row = values[r];
+    var p = String(row[3] || "").replace(/\D/g, "");
+    if (p !== phone) continue;
+    var id = String(row[0] || "");
+    if (!id) continue;
+    if (!map[id]) {
+      map[id] = {
+        caseId: id,
+        submittedAt: row[1] || "",
+        petNames: [],
+        pdfUrl: row[28] || ""
+      };
+      order.push(id);
+    }
+    if (row[8]) map[id].petNames.push(String(row[8]));
+    if (!map[id].pdfUrl && row[28]) map[id].pdfUrl = row[28];
+    if (order.length >= 30) break;
+  }
+  consumeOtp_(phone);
+  return {
+    success: true,
+    cases: order.map(function (id) { return map[id]; })
+  };
+}
+
+function findEmailByPhone_(phone) {
+  try {
+    var sh = getSheet_();
+    var values = sh.getDataRange().getDisplayValues();
+    for (var r = values.length - 1; r >= 1; r--) {
+      var p = String(values[r][3] || "").replace(/\D/g, "");
+      if (p === phone && values[r][4]) return String(values[r][4]).trim();
+    }
+  } catch (err) {}
+  return "";
 }
 
 function verifyOtp_(phone, otp) {
@@ -239,7 +311,7 @@ function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl,
   ]);
 }
 
-function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) {
+function createPdf_(folder, caseId, tzNow, owner, list, payload, signBlob) {
   var title = "NicoPark 入園資料 " + caseId;
   var doc = DocumentApp.create(title);
   var body = doc.getBody();
@@ -255,25 +327,30 @@ function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) 
   addLine_(body, "LINE 名稱", owner.lineName);
   addLine_(body, "緊急聯絡人", owner.emergencyName);
   addLine_(body, "緊急聯絡人電話", owner.emergencyPhone);
-  body.appendParagraph("二、毛寶資料").setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  addLine_(body, "名字", pet.name);
-  addLine_(body, "性別", pet.gender);
-  addLine_(body, "品種", pet.breed);
-  addLine_(body, "年齡", pet.age);
-  addLine_(body, "體重", pet.weightKg ? pet.weightKg + " 公斤" : "");
-  addLine_(body, "結紮", pet.neutered);
-  addLine_(body, "發情階段", pet.inHeat);
-  body.appendParagraph("三、照護與健康").setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  addLine_(body, "親狗親人", care.sociability);
-  addLine_(body, "護食／敏感", join_(care.guarding) + (care.guardingOther ? "；" + care.guardingOther : ""));
-  addLine_(body, "牽繩狀況", care.leash);
-  addLine_(body, "固定獸醫院", care.hasVet === "是" ? (care.vetInfo || "是") : (care.hasVet || ""));
-  addLine_(body, "近 14 天健康", join_(care.health14));
-  addLine_(body, "疾病紀錄", join_(care.diseases) + (care.diseaseOther ? "；" + care.diseaseOther : ""));
-  addLine_(body, "驅蟲", (care.deworm || "") + (care.dewormOther ? "；" + care.dewormOther : ""));
-  addLine_(body, "滴劑／口服藥", (care.preventative || "") + (care.preventativeOther ? "；" + care.preventativeOther : ""));
-  addLine_(body, "備註", care.notes);
-  body.appendParagraph("四、簽署").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  (list || []).forEach(function (item, i) {
+    var pet = item.pet || {};
+    var care = item.care || pet;
+    var n = (list.length > 1) ? "（" + (i + 1) + "）" : "";
+    body.appendParagraph("二" + n + "、毛寶資料").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    addLine_(body, "名字", pet.name);
+    addLine_(body, "性別", pet.gender);
+    addLine_(body, "品種", pet.breed);
+    addLine_(body, "年齡", pet.age);
+    addLine_(body, "體重", pet.weightKg ? pet.weightKg + " 公斤" : "");
+    addLine_(body, "結紮", pet.neutered);
+    addLine_(body, "發情階段", pet.inHeat);
+    body.appendParagraph("照護與健康" + n).setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    addLine_(body, "親狗親人", care.sociability);
+    addLine_(body, "護食／敏感", join_(care.guarding) + (care.guardingOther ? "；" + care.guardingOther : ""));
+    addLine_(body, "牽繩狀況", care.leash);
+    addLine_(body, "固定獸醫院", care.hasVet === "是" ? (care.vetInfo || "是") : (care.hasVet || ""));
+    addLine_(body, "近 14 天健康", join_(care.health14));
+    addLine_(body, "疾病紀錄", join_(care.diseases) + (care.diseaseOther ? "；" + care.diseaseOther : ""));
+    addLine_(body, "驅蟲", (care.deworm || "") + (care.dewormOther ? "；" + care.dewormOther : ""));
+    addLine_(body, "滴劑／口服藥", (care.preventative || "") + (care.preventativeOther ? "；" + care.preventativeOther : ""));
+    addLine_(body, "備註", care.notes);
+  });
+  body.appendParagraph("三、簽署").setHeading(DocumentApp.ParagraphHeading.HEADING2);
   addLine_(body, "同意電子簽署", payload.agreedToTerms ? "是" : "否");
   addLine_(body, "簽署時間", payload.agreedAt);
   if (signBlob) {
@@ -296,33 +373,34 @@ function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) 
   return pdfFile;
 }
 
-function sendCustomerMail_(owner, pet, caseId, pdfFile, folderUrl) {
+function sendCustomerMail_(owner, names, caseId, pdfFile) {
   var to = String(owner.email || "");
   if (!to) return;
+  var petLabel = (names && names.length) ? names.join("、") : "毛寶";
   MailApp.sendEmail({
     to: to,
     subject: "【" + CONFIG.BUSINESS_NAME + "】入園資料已受理（" + caseId + "）",
     name: "Nico Nico Pet House",
     htmlBody:
       "<p>" + esc_(owner.name) + " 您好，</p>" +
-      "<p>我們已收到毛寶 <strong>" + esc_(pet.name) + "</strong> 的 NicoPark 入園資料與電子簽署。</p>" +
+      "<p>我們已收到毛寶 <strong>" + esc_(petLabel) + "</strong> 的 NicoPark 入園資料與電子簽署。</p>" +
       "<p>案件識別碼：<strong>" + esc_(caseId) + "</strong></p>" +
-      "<p>副本 PDF 如附件，也請自行保存此信件。</p>" +
-      "<p>若需補件或有照護叮嚀，請再與 Nico Nico 聯繫。</p>" +
+      "<p>副本 PDF 如附件。之後也可在網站以手機驗證碼查詢案件。</p>" +
       "<p>Nico Nico Pet House 尼口尼口寵物精緻美容旅館</p>",
     attachments: [pdfFile.getAs(MimeType.PDF)]
   });
 }
 
-function sendBusinessMail_(owner, pet, caseId, pdfFile, folderUrl) {
+function sendBusinessMail_(owner, names, caseId, pdfFile, folderUrl) {
+  var petLabel = (names && names.length) ? names.join("、") : "";
   MailApp.sendEmail({
     to: CONFIG.BUSINESS_EMAIL,
-    subject: "【新入園】" + caseId + " " + (pet.name || "") + "／" + (owner.name || ""),
+    subject: "【新入園】" + caseId + " " + petLabel + "／" + (owner.name || ""),
     name: "NicoPark",
     htmlBody:
       "<p>新的入園資料已寫入試算表並存雲端。</p>" +
       "<p>案件：" + esc_(caseId) + "<br>飼主：" + esc_(owner.name) + " " + esc_(owner.phone) +
-      "<br>毛寶：" + esc_(pet.name) + "</p>" +
+      "<br>毛寶：" + esc_(petLabel) + "</p>" +
       "<p><a href=\"" + folderUrl + "\">開啟雲端資料夾</a></p>",
     attachments: [pdfFile.getAs(MimeType.PDF)]
   });

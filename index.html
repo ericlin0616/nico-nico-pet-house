@@ -162,6 +162,92 @@
     }
     .bone-rule svg { flex: none; }
 
+    .site-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 16px 0 0;
+    }
+    .site-nav button {
+      appearance: none;
+      border: 0;
+      width: 100%;
+      background: color-mix(in srgb, var(--paper) 82%, transparent);
+      color: var(--cocoa);
+      font: inherit;
+      font-size: 0.86rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 12px 16px;
+      border-radius: 999px;
+      box-shadow: 0 0 0 1px rgba(83, 69, 58, 0.08);
+    }
+    .site-nav button.is-on {
+      background: var(--cocoa);
+      color: #F8F3EC;
+      box-shadow: none;
+    }
+    @media (min-width: 641px) {
+      .site-nav {
+        flex-direction: row;
+        justify-content: center;
+      }
+      .site-nav button { width: auto; min-width: 148px; }
+    }
+
+    .pet-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
+    .pet-head > div { flex: 1; min-width: 0; }
+    .pet-head h2 { margin: 0; }
+    .pet-head [data-remove-pet] {
+      flex: none;
+      white-space: nowrap;
+    }
+    .pet-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .case-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .case-item {
+      background: var(--warm);
+      border-radius: var(--radius-lg);
+      padding: 14px 14px 12px;
+      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.07);
+    }
+    .case-item strong {
+      display: block;
+      font-size: 1rem;
+      color: var(--cocoa-deep);
+      letter-spacing: 0.03em;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+    .case-item p {
+      margin: 0 0 8px;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    .case-item a {
+      color: var(--cocoa);
+      font-weight: 600;
+      font-size: 0.86rem;
+    }
+
+    .progress.is-idle { opacity: 0.38; pointer-events: none; }
+
     .progress {
       list-style: none;
       display: flex;
@@ -700,6 +786,10 @@
           <path d="M4.2 1.2a2.4 2.4 0 0 0-2.4 2.4c0 .5.16.96.42 1.34A2.4 2.4 0 0 0 1.8 8.4a2.4 2.4 0 0 0 2.4 2.4c.7 0 1.32-.3 1.76-.77h10.08c.44.47 1.06.77 1.76.77a2.4 2.4 0 0 0 2.4-2.4 2.4 2.4 0 0 0-1.42-2.18c.26-.38.42-.84.42-1.34a2.4 2.4 0 0 0-2.4-2.4c-.7 0-1.32.3-1.76.77H7.96A2.38 2.38 0 0 0 6.2 1.2H4.2Z"/>
         </svg>
       </div>
+      <nav class="site-nav" aria-label="頁面切換">
+        <button type="button" id="nav-register" class="is-on">入園登記</button>
+        <button type="button" id="nav-lookup">查詢案件</button>
+      </nav>
     </header>
 
     <ol class="progress" aria-label="填寫進度">
@@ -724,7 +814,7 @@
         <article class="card">
           <span class="card-kicker">Step 01</span>
           <h2 tabindex="-1">飼主聯絡資料</h2>
-          <p class="lede">請填寫主要聯絡人資料。電子信箱將於第三步收取驗證碼。</p>
+          <p class="lede">請填寫主要聯絡人資料。同一飼主可一次登記多隻毛孩。電子信箱將於第三步收取驗證碼。</p>
           <div id="banner-1"></div>
           <div class="stack">
             <div class="field">
@@ -760,191 +850,10 @@
           </div>
         </article>
 
-        <article class="card">
-          <span class="card-kicker">Step 01</span>
-          <h2>毛寶基本資料</h2>
-          <p class="lede">請填寫本次入園毛孩的基本資料。</p>
-          <div class="stack">
-            <div class="field">
-              <label for="petName">毛寶名字 <span class="req">必填</span></label>
-              <input id="petName" name="petName" type="text" maxlength="40" />
-              <p class="error" data-err="petName"></p>
-            </div>
-            <fieldset class="field">
-              <legend>性別 <span class="req">必填</span></legend>
-              <div class="chips duo">
-                <label class="choice"><input type="radio" name="petGender" value="男生" /> 男生</label>
-                <label class="choice"><input type="radio" name="petGender" value="女生" /> 女生</label>
-              </div>
-              <p class="error" data-err="petGender"></p>
-            </fieldset>
-            <div class="field">
-              <label for="petBreed">品種 <span class="req">必填</span></label>
-              <input id="petBreed" name="petBreed" type="text" maxlength="40" />
-              <p class="error" data-err="petBreed"></p>
-            </div>
-            <div class="field">
-              <label for="petAge">年齡 <span class="req">必填</span></label>
-              <div class="suffix">
-                <input id="petAge" name="petAge" type="number" inputmode="decimal" min="0" max="40" step="0.1" placeholder="例如：3" />
-                <span>歲</span>
-              </div>
-              <p class="error" data-err="petAge"></p>
-            </div>
-            <div class="field">
-              <label for="petWeight">體重 <span class="req">必填</span></label>
-              <div class="suffix">
-                <input id="petWeight" name="petWeight" type="number" inputmode="decimal" min="0.1" max="99" step="0.1" placeholder="0.0" />
-                <span>公斤</span>
-              </div>
-              <p class="error" data-err="petWeight"></p>
-            </div>
-            <fieldset class="field">
-              <legend>是否結紮 <span class="req">必填</span></legend>
-              <div class="chips duo">
-                <label class="choice"><input type="radio" name="neutered" value="是" /> 是</label>
-                <label class="choice"><input type="radio" name="neutered" value="否" /> 否</label>
-              </div>
-              <p class="error" data-err="neutered"></p>
-            </fieldset>
-            <fieldset class="field">
-              <legend>是否處於發情階段 <span class="req">必填</span></legend>
-              <div class="chips duo">
-                <label class="choice"><input type="radio" name="inHeat" value="是" /> 是</label>
-                <label class="choice"><input type="radio" name="inHeat" value="否" /> 否</label>
-              </div>
-              <p class="error" data-err="inHeat"></p>
-            </fieldset>
-          </div>
-        </article>
-
-        <article class="card">
-          <span class="card-kicker">Care</span>
-          <h2>個性、照護與健康狀況</h2>
-          <p class="lede">這些資訊能幫助我們更溫柔、安全地照顧毛孩。</p>
-          <div class="stack">
-            <fieldset class="field">
-              <legend>親狗親人</legend>
-              <div class="chips">
-                <label class="choice"><input type="radio" name="sociability" value="親狗親人" /> 親狗親人</label>
-                <label class="choice"><input type="radio" name="sociability" value="親狗不親人" /> 親狗不親人</label>
-                <label class="choice"><input type="radio" name="sociability" value="親人不親狗" /> 親人不親狗</label>
-                <label class="choice"><input type="radio" name="sociability" value="皆不親" /> 皆不親</label>
-              </div>
-            </fieldset>
-
-            <fieldset class="field">
-              <legend>是否有護食、護玩具或碰觸敏感部位低吼經驗</legend>
-              <div class="chips" id="guarding-group">
-                <label class="choice"><input type="checkbox" name="guarding" value="有護食、護玩具" /> 有護食、護玩具</label>
-                <label class="choice"><input type="checkbox" name="guarding" value="突然被觸碰敏感部位會低吼" /> 突然被觸碰敏感部位會低吼</label>
-                <label class="choice"><input type="checkbox" name="guarding" value="無此狀況" data-none="1" /> 無此狀況</label>
-                <label class="choice"><input type="checkbox" name="guarding" value="其他" data-reveal="guardingOtherWrap" /> 其他，可填寫</label>
-              </div>
-              <div class="reveal" id="guardingOtherWrap" hidden>
-                <label class="sr-only" for="guardingOther">其他說明</label>
-                <input id="guardingOther" name="guardingOther" type="text" maxlength="80" placeholder="請簡述其他狀況" />
-              </div>
-              <p class="error" data-err="guarding"></p>
-            </fieldset>
-
-            <fieldset class="field">
-              <legend>平時散步時牽繩狀況</legend>
-              <div class="chips">
-                <label class="choice"><input type="radio" name="leash" value="乖巧隨行" /> 乖巧隨行</label>
-                <label class="choice"><input type="radio" name="leash" value="會微微拉緊" /> 會微微拉緊</label>
-                <label class="choice"><input type="radio" name="leash" value="看到人車或貓狗會激動暴衝" /> 看到人車或貓狗會激動暴衝</label>
-              </div>
-            </fieldset>
-
-            <fieldset class="field">
-              <legend>是否有固定獸醫院</legend>
-              <div class="chips duo">
-                <label class="choice"><input type="radio" name="hasVet" value="是" data-reveal="vetWrap" /> 是</label>
-                <label class="choice"><input type="radio" name="hasVet" value="否" /> 否</label>
-              </div>
-              <div class="reveal" id="vetWrap" hidden>
-                <label for="vetInfo">獸醫院名稱與電話 <span class="req">必填</span></label>
-                <input id="vetInfo" name="vetInfo" type="text" maxlength="80" placeholder="院所名稱與電話" />
-              </div>
-              <p class="error" data-err="vetInfo"></p>
-            </fieldset>
-
-            <fieldset class="field">
-              <legend>近 14 天健康狀況 <span class="req">必填 · 可複選</span></legend>
-              <div class="chips" id="health-group">
-                <label class="choice"><input type="checkbox" name="health14" value="咳嗽" /> 咳嗽</label>
-                <label class="choice"><input type="checkbox" name="health14" value="嘔吐" /> 嘔吐</label>
-                <label class="choice"><input type="checkbox" name="health14" value="腹瀉" /> 腹瀉</label>
-                <label class="choice"><input type="checkbox" name="health14" value="食慾不佳" /> 食慾不佳</label>
-                <label class="choice"><input type="checkbox" name="health14" value="精神不佳" /> 精神不佳</label>
-                <label class="choice"><input type="checkbox" name="health14" value="發燒" /> 發燒</label>
-                <label class="choice"><input type="checkbox" name="health14" value="皮膚紅疹" /> 皮膚紅疹</label>
-                <label class="choice"><input type="checkbox" name="health14" value="掉毛異常" /> 掉毛異常</label>
-                <label class="choice"><input type="checkbox" name="health14" value="黴菌／皮膚病疑慮" /> 黴菌／皮膚病疑慮</label>
-                <label class="choice"><input type="checkbox" name="health14" value="跳蚤／壁蝨" /> 跳蚤／壁蝨</label>
-                <label class="choice"><input type="checkbox" name="health14" value="傷口" /> 傷口</label>
-                <label class="choice"><input type="checkbox" name="health14" value="術後恢復中" /> 術後恢復中</label>
-                <label class="choice"><input type="checkbox" name="health14" value="以上皆無" data-none="1" /> 以上皆無</label>
-              </div>
-              <p class="error" data-err="health14"></p>
-            </fieldset>
-
-            <fieldset class="field">
-              <legend>是否曾被獸醫診斷疾病 <span class="req">必填 · 可複選</span></legend>
-              <div class="chips" id="disease-group">
-                <label class="choice"><input type="checkbox" name="diseases" value="心臟病" /> 心臟病</label>
-                <label class="choice"><input type="checkbox" name="diseases" value="氣管塌陷" /> 氣管塌陷</label>
-                <label class="choice"><input type="checkbox" name="diseases" value="癲癇" /> 癲癇</label>
-                <label class="choice"><input type="checkbox" name="diseases" value="關節問題" /> 關節問題</label>
-                <label class="choice"><input type="checkbox" name="diseases" value="呼吸道疾病" /> 呼吸道疾病</label>
-                <label class="choice"><input type="checkbox" name="diseases" value="過敏" /> 過敏</label>
-                <label class="choice"><input type="checkbox" name="diseases" value="皮膚病" /> 皮膚病</label>
-                <label class="choice"><input type="checkbox" name="diseases" value="其他疾病" data-reveal="diseaseOtherWrap" /> 其他疾病</label>
-                <label class="choice"><input type="checkbox" name="diseases" value="以上皆無" data-none="1" /> 以上皆無</label>
-              </div>
-              <div class="reveal" id="diseaseOtherWrap" hidden>
-                <label class="sr-only" for="diseaseOther">其他疾病說明</label>
-                <input id="diseaseOther" name="diseaseOther" type="text" maxlength="80" placeholder="請填寫疾病名稱" />
-              </div>
-              <p class="error" data-err="diseases"></p>
-            </fieldset>
-
-            <fieldset class="field">
-              <legend>最近一次體內外驅蟲時間</legend>
-              <div class="chips">
-                <label class="choice"><input type="radio" name="deworm" value="半年內" /> 半年內</label>
-                <label class="choice"><input type="radio" name="deworm" value="一年" /> 一年</label>
-                <label class="choice"><input type="radio" name="deworm" value="不太確定" /> 不太確定</label>
-                <label class="choice"><input type="radio" name="deworm" value="其他" data-reveal="dewormOtherWrap" /> 其他並填寫</label>
-              </div>
-              <div class="reveal" id="dewormOtherWrap" hidden>
-                <label class="sr-only" for="dewormOther">其他驅蟲時間</label>
-                <input id="dewormOther" name="dewormOther" type="text" maxlength="80" placeholder="請填寫時間或說明" />
-              </div>
-              <p class="error" data-err="deworm"></p>
-            </fieldset>
-
-            <fieldset class="field">
-              <legend>是否固定施用滴劑或口服藥</legend>
-              <div class="chips">
-                <label class="choice"><input type="radio" name="preventative" value="是" /> 是</label>
-                <label class="choice"><input type="radio" name="preventative" value="否" /> 否</label>
-                <label class="choice"><input type="radio" name="preventative" value="其他" data-reveal="preventativeOtherWrap" /> 其他並填寫</label>
-              </div>
-              <div class="reveal" id="preventativeOtherWrap" hidden>
-                <label class="sr-only" for="preventativeOther">其他用藥說明</label>
-                <input id="preventativeOther" name="preventativeOther" type="text" maxlength="80" placeholder="請填寫藥品或說明" />
-              </div>
-              <p class="error" data-err="preventative"></p>
-            </fieldset>
-
-            <div class="field">
-              <label for="notes">注意事項／備註</label>
-              <textarea id="notes" name="notes" maxlength="500" placeholder="飲食禁忌、怕的事物、喜歡的安撫方式等"></textarea>
-            </div>
-          </div>
-        </article>
+        <div id="pets-root"></div>
+        <div class="pet-actions">
+          <button type="button" class="btn btn-ghost" id="add-pet">新增毛孩</button>
+        </div>
 
         <div class="actions">
           <button type="button" class="btn btn-primary" id="to-step-2">下一步：閱讀並簽署</button>
@@ -1078,11 +987,216 @@
           <strong id="case-id"></strong>
         </div>
         <a class="pdf-link" id="pdf-link" hidden target="_blank" rel="noopener noreferrer">下載入園資料副本（PDF）</a>
+        <div class="pet-actions" style="margin-top:16px">
+          <button type="button" class="btn btn-ghost" id="success-lookup">查詢其他案件</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel" id="lookup-panel" hidden>
+      <article class="card">
+        <span class="card-kicker">Lookup</span>
+        <h2 tabindex="-1">查詢入園案件</h2>
+        <p class="lede">請輸入當初登記的手機號碼。驗證碼會寄到該筆資料的電子信箱，通過後即可查看案件編號與 PDF。</p>
+        <div id="banner-lookup"></div>
+        <div class="stack">
+          <div class="field">
+            <label for="lookupPhone">聯絡電話 <span class="req">必填</span></label>
+            <input id="lookupPhone" type="tel" inputmode="tel" maxlength="20" placeholder="0912-345-678" autocomplete="tel" />
+            <p class="error" data-err="lookupPhone"></p>
+          </div>
+          <div class="field">
+            <label for="lookupOtp">6 位數驗證碼 <span class="req">必填</span></label>
+            <input id="lookupOtp" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="••••••" />
+            <p class="error" data-err="lookupOtp"></p>
+          </div>
+          <button type="button" class="btn btn-ghost" id="send-lookup-otp">發送驗證碼</button>
+          <button type="button" class="btn btn-primary" id="do-lookup">查詢案件</button>
+        </div>
+        <div class="case-list" id="lookup-results" hidden></div>
       </article>
     </section>
 
     <footer class="site-foot">Nico Nico Pet House　尼口尼口寵物精緻美容旅館</footer>
   </div>
+
+
+    <template id="pet-card-tpl">
+      <article class="card pet-card" data-pet>
+        <div class="pet-head">
+          <div>
+            <span class="card-kicker">Pet</span>
+            <h2>毛寶 <span data-pet-n>1</span></h2>
+            <p class="lede">請填寫這隻毛孩的基本資料、個性與健康狀況。</p>
+          </div>
+          <button type="button" class="btn btn-text" data-remove-pet hidden>移除</button>
+        </div>
+        <div class="stack">
+          <div class="field">
+            <label for="p__IDX___name">毛寶名字 <span class="req">必填</span></label>
+            <input id="p__IDX___name" data-k="name" type="text" maxlength="40" />
+            <p class="error" data-err="p__IDX___name"></p>
+          </div>
+          <fieldset class="field">
+            <legend>性別 <span class="req">必填</span></legend>
+            <div class="chips duo">
+              <label class="choice"><input type="radio" name="p__IDX___gender" data-k="gender" value="男生" /> 男生</label>
+              <label class="choice"><input type="radio" name="p__IDX___gender" data-k="gender" value="女生" /> 女生</label>
+            </div>
+            <p class="error" data-err="p__IDX___gender"></p>
+          </fieldset>
+          <div class="field">
+            <label for="p__IDX___breed">品種 <span class="req">必填</span></label>
+            <input id="p__IDX___breed" data-k="breed" type="text" maxlength="40" />
+            <p class="error" data-err="p__IDX___breed"></p>
+          </div>
+          <div class="field">
+            <label for="p__IDX___age">年齡 <span class="req">必填</span></label>
+            <div class="suffix">
+              <input id="p__IDX___age" data-k="age" type="number" inputmode="decimal" min="0" max="40" step="0.1" placeholder="例如：3" />
+              <span>歲</span>
+            </div>
+            <p class="error" data-err="p__IDX___age"></p>
+          </div>
+          <div class="field">
+            <label for="p__IDX___weight">體重 <span class="req">必填</span></label>
+            <div class="suffix">
+              <input id="p__IDX___weight" data-k="weightKg" type="number" inputmode="decimal" min="0.1" max="99" step="0.1" placeholder="0.0" />
+              <span>公斤</span>
+            </div>
+            <p class="error" data-err="p__IDX___weight"></p>
+          </div>
+          <fieldset class="field">
+            <legend>是否結紮 <span class="req">必填</span></legend>
+            <div class="chips duo">
+              <label class="choice"><input type="radio" name="p__IDX___neutered" data-k="neutered" value="是" /> 是</label>
+              <label class="choice"><input type="radio" name="p__IDX___neutered" data-k="neutered" value="否" /> 否</label>
+            </div>
+            <p class="error" data-err="p__IDX___neutered"></p>
+          </fieldset>
+          <fieldset class="field">
+            <legend>是否處於發情階段 <span class="req">必填</span></legend>
+            <div class="chips duo">
+              <label class="choice"><input type="radio" name="p__IDX___inHeat" data-k="inHeat" value="是" /> 是</label>
+              <label class="choice"><input type="radio" name="p__IDX___inHeat" data-k="inHeat" value="否" /> 否</label>
+            </div>
+            <p class="error" data-err="p__IDX___inHeat"></p>
+          </fieldset>
+          <fieldset class="field">
+            <legend>親狗親人</legend>
+            <div class="chips">
+              <label class="choice"><input type="radio" name="p__IDX___sociability" data-k="sociability" value="親狗親人" /> 親狗親人</label>
+              <label class="choice"><input type="radio" name="p__IDX___sociability" data-k="sociability" value="親狗不親人" /> 親狗不親人</label>
+              <label class="choice"><input type="radio" name="p__IDX___sociability" data-k="sociability" value="親人不親狗" /> 親人不親狗</label>
+              <label class="choice"><input type="radio" name="p__IDX___sociability" data-k="sociability" value="皆不親" /> 皆不親</label>
+            </div>
+          </fieldset>
+          <fieldset class="field">
+            <legend>是否有護食、護玩具或碰觸敏感部位低吼經驗</legend>
+            <div class="chips">
+              <label class="choice"><input type="checkbox" name="p__IDX___guarding" data-k="guarding" value="有護食、護玩具" /> 有護食、護玩具</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___guarding" data-k="guarding" value="突然被觸碰敏感部位會低吼" /> 突然被觸碰敏感部位會低吼</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___guarding" data-k="guarding" value="無此狀況" data-none="1" /> 無此狀況</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___guarding" data-k="guarding" value="其他" data-reveal="p__IDX___guardingOtherWrap" /> 其他，可填寫</label>
+            </div>
+            <div class="reveal" id="p__IDX___guardingOtherWrap" hidden>
+              <label class="sr-only" for="p__IDX___guardingOther">其他說明</label>
+              <input id="p__IDX___guardingOther" data-k="guardingOther" type="text" maxlength="80" placeholder="請簡述其他狀況" />
+            </div>
+            <p class="error" data-err="p__IDX___guarding"></p>
+          </fieldset>
+          <fieldset class="field">
+            <legend>平時散步時牽繩狀況</legend>
+            <div class="chips">
+              <label class="choice"><input type="radio" name="p__IDX___leash" data-k="leash" value="乖巧隨行" /> 乖巧隨行</label>
+              <label class="choice"><input type="radio" name="p__IDX___leash" data-k="leash" value="會微微拉緊" /> 會微微拉緊</label>
+              <label class="choice"><input type="radio" name="p__IDX___leash" data-k="leash" value="看到人車或貓狗會激動暴衝" /> 看到人車或貓狗會激動暴衝</label>
+            </div>
+          </fieldset>
+          <fieldset class="field">
+            <legend>是否有固定獸醫院</legend>
+            <div class="chips duo">
+              <label class="choice"><input type="radio" name="p__IDX___hasVet" data-k="hasVet" value="是" data-reveal="p__IDX___vetWrap" /> 是</label>
+              <label class="choice"><input type="radio" name="p__IDX___hasVet" data-k="hasVet" value="否" /> 否</label>
+            </div>
+            <div class="reveal" id="p__IDX___vetWrap" hidden>
+              <label for="p__IDX___vetInfo">獸醫院名稱與電話 <span class="req">必填</span></label>
+              <input id="p__IDX___vetInfo" data-k="vetInfo" type="text" maxlength="80" placeholder="院所名稱與電話" />
+            </div>
+            <p class="error" data-err="p__IDX___vetInfo"></p>
+          </fieldset>
+          <fieldset class="field">
+            <legend>近 14 天健康狀況 <span class="req">必填 · 可複選</span></legend>
+            <div class="chips">
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="咳嗽" /> 咳嗽</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="嘔吐" /> 嘔吐</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="腹瀉" /> 腹瀉</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="食慾不佳" /> 食慾不佳</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="精神不佳" /> 精神不佳</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="發燒" /> 發燒</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="皮膚紅疹" /> 皮膚紅疹</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="掉毛異常" /> 掉毛異常</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="黴菌／皮膚病疑慮" /> 黴菌／皮膚病疑慮</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="跳蚤／壁蝨" /> 跳蚤／壁蝨</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="傷口" /> 傷口</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="術後恢復中" /> 術後恢復中</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="以上皆無" data-none="1" /> 以上皆無</label>
+            </div>
+            <p class="error" data-err="p__IDX___health14"></p>
+          </fieldset>
+          <fieldset class="field">
+            <legend>是否曾被獸醫診斷疾病 <span class="req">必填 · 可複選</span></legend>
+            <div class="chips">
+              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="心臟病" /> 心臟病</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="氣管塌陷" /> 氣管塌陷</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="癲癇" /> 癲癇</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="關節問題" /> 關節問題</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="呼吸道疾病" /> 呼吸道疾病</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="過敏" /> 過敏</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="皮膚病" /> 皮膚病</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="其他疾病" data-reveal="p__IDX___diseaseOtherWrap" /> 其他疾病</label>
+              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="以上皆無" data-none="1" /> 以上皆無</label>
+            </div>
+            <div class="reveal" id="p__IDX___diseaseOtherWrap" hidden>
+              <label class="sr-only" for="p__IDX___diseaseOther">其他疾病說明</label>
+              <input id="p__IDX___diseaseOther" data-k="diseaseOther" type="text" maxlength="80" placeholder="請填寫疾病名稱" />
+            </div>
+            <p class="error" data-err="p__IDX___diseases"></p>
+          </fieldset>
+          <fieldset class="field">
+            <legend>最近一次體內外驅蟲時間</legend>
+            <div class="chips">
+              <label class="choice"><input type="radio" name="p__IDX___deworm" data-k="deworm" value="半年內" /> 半年內</label>
+              <label class="choice"><input type="radio" name="p__IDX___deworm" data-k="deworm" value="一年" /> 一年</label>
+              <label class="choice"><input type="radio" name="p__IDX___deworm" data-k="deworm" value="不太確定" /> 不太確定</label>
+              <label class="choice"><input type="radio" name="p__IDX___deworm" data-k="deworm" value="其他" data-reveal="p__IDX___dewormOtherWrap" /> 其他並填寫</label>
+            </div>
+            <div class="reveal" id="p__IDX___dewormOtherWrap" hidden>
+              <label class="sr-only" for="p__IDX___dewormOther">其他驅蟲時間</label>
+              <input id="p__IDX___dewormOther" data-k="dewormOther" type="text" maxlength="80" placeholder="請填寫時間或說明" />
+            </div>
+            <p class="error" data-err="p__IDX___deworm"></p>
+          </fieldset>
+          <fieldset class="field">
+            <legend>是否固定施用滴劑或口服藥</legend>
+            <div class="chips">
+              <label class="choice"><input type="radio" name="p__IDX___preventative" data-k="preventative" value="是" /> 是</label>
+              <label class="choice"><input type="radio" name="p__IDX___preventative" data-k="preventative" value="否" /> 否</label>
+              <label class="choice"><input type="radio" name="p__IDX___preventative" data-k="preventative" value="其他" data-reveal="p__IDX___preventativeOtherWrap" /> 其他並填寫</label>
+            </div>
+            <div class="reveal" id="p__IDX___preventativeOtherWrap" hidden>
+              <label class="sr-only" for="p__IDX___preventativeOther">其他用藥說明</label>
+              <input id="p__IDX___preventativeOther" data-k="preventativeOther" type="text" maxlength="80" placeholder="請填寫藥品或說明" />
+            </div>
+            <p class="error" data-err="p__IDX___preventative"></p>
+          </fieldset>
+          <div class="field">
+            <label for="p__IDX___notes">注意事項／備註</label>
+            <textarea id="p__IDX___notes" data-k="notes" maxlength="500" placeholder="飲食禁忌、怕的事物、喜歡的安撫方式等"></textarea>
+          </div>
+        </div>
+      </article>
+    </template>
 
   <script>
   (function () {
@@ -1093,9 +1207,11 @@
      */
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfWDmN_fO0lW1sp4vbx8vx16s7DVJgoxNWi_r0ahd7Arq3aJhVhhIGP9EpvL99E7KT/exec";
 
-    const DRAFT_KEY = "nicopark-draft-v1";
+    const DRAFT_KEY = "nicopark-draft-v2";
+    const DRAFT_KEY_OLD = "nicopark-draft-v1";
     const FETCH_MS = 28000;
     const OTP_SEC = 60;
+    const MAX_PETS = 5;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const $ = (sel, root) => (root || document).querySelector(sel);
@@ -1106,12 +1222,18 @@
     }
 
     let current = 1;
+    let mode = "register";
     let pad = null;
     let otpLeft = 0;
     let otpTimer = null;
+    let lookupLeft = 0;
+    let lookupTimer = null;
     let sending = false;
+    let sendingLookup = false;
     let submitting = false;
+    let looking = false;
     let maxReached = 1;
+    let petSeq = 0;
 
     function val(id) {
       const el = document.getElementById(id);
@@ -1197,8 +1319,8 @@
       }
     }
 
-    function bindExclusive(name) {
-      const boxes = $$("input[name=\"" + name + "\"]");
+    function bindExclusive(name, root) {
+      const boxes = $$("input[name=\"" + name + "\"]", root);
       boxes.forEach((box) => {
         box.addEventListener("change", () => {
           if (!box.checked) return;
@@ -1233,18 +1355,132 @@
       });
     }
 
-    $$("[data-reveal]").forEach((input) => {
-      input.addEventListener("change", syncReveals);
-    });
-    $$("input[name='hasVet'], input[name='deworm'], input[name='preventative']").forEach((el) => {
-      el.addEventListener("change", syncReveals);
-    });
-    bindExclusive("guarding");
-    bindExclusive("health14");
-    bindExclusive("diseases");
+    function petCards() {
+      return $$("[data-pet]", document.getElementById("pets-root"));
+    }
+    function cardVal(card, key) {
+      const el = card.querySelector("[data-k=\"" + key + "\"]:not([type=radio]):not([type=checkbox])");
+      return el ? String(el.value || "").trim() : "";
+    }
+    function cardRadio(card, key) {
+      const el = card.querySelector("input[data-k=\"" + key + "\"]:checked");
+      return el ? el.value : "";
+    }
+    function cardChecks(card, key) {
+      return $$("input[data-k=\"" + key + "\"]:checked", card).map((e) => e.value);
+    }
+    function cardSet(card, key, values) {
+      const set = new Set(Array.isArray(values) ? values : values ? [values] : []);
+      $$("[data-k=\"" + key + "\"]", card).forEach((el) => {
+        if (el.type === "radio" || el.type === "checkbox") el.checked = set.has(el.value);
+        else if (values != null) el.value = values;
+      });
+    }
+    function cardId(card, key) {
+      const el = card.querySelector("[data-k=\"" + key + "\"]:not([type=radio]):not([type=checkbox])")
+        || card.querySelector("[data-err$=\"_" + key + "\"]")
+        || card.querySelector("[data-k=\"" + key + "\"]");
+      return el && el.id ? el.id : (el && el.name) || key;
+    }
+
+    function bindPetCard(card) {
+      ["guarding", "health14", "diseases"].forEach((g) => {
+        const sample = card.querySelector("input[data-k=\"" + g + "\"]");
+        if (sample) bindExclusive(sample.name, card);
+      });
+      $$("[data-reveal]", card).forEach((input) => input.addEventListener("change", syncReveals));
+      const rm = card.querySelector("[data-remove-pet]");
+      if (rm) rm.addEventListener("click", () => {
+        if (petCards().length <= 1) return;
+        card.remove();
+        refreshPetChrome();
+        saveDraft();
+      });
+    }
+
+    function refreshPetChrome() {
+      const cards = petCards();
+      cards.forEach((card, i) => {
+        const n = card.querySelector("[data-pet-n]");
+        if (n) n.textContent = String(i + 1);
+        const rm = card.querySelector("[data-remove-pet]");
+        if (rm) rm.hidden = cards.length <= 1;
+      });
+      const add = document.getElementById("add-pet");
+      if (add) add.hidden = cards.length >= MAX_PETS;
+    }
+
+    function addPet(data) {
+      if (petCards().length >= MAX_PETS) return;
+      const tpl = document.getElementById("pet-card-tpl");
+      const idx = petSeq++;
+      const wrap = document.createElement("div");
+      wrap.innerHTML = tpl.innerHTML.replace(/__IDX__/g, String(idx));
+      const card = wrap.firstElementChild;
+      document.getElementById("pets-root").appendChild(card);
+      bindPetCard(card);
+      if (data) fillPet(card, data);
+      refreshPetChrome();
+      syncReveals();
+      return card;
+    }
+
+    function fillPet(card, data) {
+      const d = data || {};
+      const care = d.care || d;
+      cardSet(card, "name", d.name || "");
+      cardSet(card, "gender", d.gender);
+      cardSet(card, "breed", d.breed || "");
+      cardSet(card, "age", String(d.age || "").replace(/[^\d.]/g, ""));
+      cardSet(card, "weightKg", d.weightKg || "");
+      cardSet(card, "neutered", d.neutered);
+      cardSet(card, "inHeat", d.inHeat);
+      cardSet(card, "sociability", care.sociability || d.sociability);
+      cardSet(card, "guarding", care.guarding || d.guarding);
+      cardSet(card, "guardingOther", care.guardingOther || d.guardingOther || "");
+      cardSet(card, "leash", care.leash || d.leash);
+      cardSet(card, "hasVet", care.hasVet || d.hasVet);
+      cardSet(card, "vetInfo", care.vetInfo || d.vetInfo || "");
+      cardSet(card, "health14", care.health14 || d.health14);
+      cardSet(card, "diseases", care.diseases || d.diseases);
+      cardSet(card, "diseaseOther", care.diseaseOther || d.diseaseOther || "");
+      cardSet(card, "deworm", care.deworm || d.deworm);
+      cardSet(card, "dewormOther", care.dewormOther || d.dewormOther || "");
+      cardSet(card, "preventative", care.preventative || d.preventative);
+      cardSet(card, "preventativeOther", care.preventativeOther || d.preventativeOther || "");
+      cardSet(card, "notes", care.notes || d.notes || "");
+    }
+
+    function collectPet(card) {
+      return {
+        name: cardVal(card, "name"),
+        gender: cardRadio(card, "gender"),
+        breed: cardVal(card, "breed"),
+        age: cardVal(card, "age") ? cardVal(card, "age") + "歲" : "",
+        weightKg: cardVal(card, "weightKg"),
+        neutered: cardRadio(card, "neutered"),
+        inHeat: cardRadio(card, "inHeat"),
+        sociability: cardRadio(card, "sociability"),
+        guarding: cardChecks(card, "guarding"),
+        guardingOther: cardVal(card, "guardingOther"),
+        leash: cardRadio(card, "leash"),
+        hasVet: cardRadio(card, "hasVet"),
+        vetInfo: cardVal(card, "vetInfo"),
+        health14: cardChecks(card, "health14"),
+        diseases: cardChecks(card, "diseases"),
+        diseaseOther: cardVal(card, "diseaseOther"),
+        deworm: cardRadio(card, "deworm"),
+        dewormOther: cardVal(card, "dewormOther"),
+        preventative: cardRadio(card, "preventative"),
+        preventativeOther: cardVal(card, "preventativeOther"),
+        notes: cardVal(card, "notes")
+      };
+    }
 
     function collectForm() {
       const phone = normalizeTwMobile(val("ownerPhone"));
+      const pets = petCards().map(collectPet);
+      const first = pets[0] || {};
       return {
         owner: {
           name: val("ownerName"),
@@ -1255,31 +1491,9 @@
           emergencyName: val("emergencyName"),
           emergencyPhone: val("emergencyPhone")
         },
-        pet: {
-          name: val("petName"),
-          gender: radio("petGender"),
-          breed: val("petBreed"),
-          age: val("petAge") ? val("petAge") + "歲" : "",
-          weightKg: val("petWeight"),
-          neutered: radio("neutered"),
-          inHeat: radio("inHeat")
-        },
-        care: {
-          sociability: radio("sociability"),
-          guarding: checks("guarding"),
-          guardingOther: val("guardingOther"),
-          leash: radio("leash"),
-          hasVet: radio("hasVet"),
-          vetInfo: val("vetInfo"),
-          health14: checks("health14"),
-          diseases: checks("diseases"),
-          diseaseOther: val("diseaseOther"),
-          deworm: radio("deworm"),
-          dewormOther: val("dewormOther"),
-          preventative: radio("preventative"),
-          preventativeOther: val("preventativeOther"),
-          notes: val("notes")
-        }
+        pets: pets,
+        pet: first,
+        care: first
       };
     }
 
@@ -1292,45 +1506,80 @@
 
     function restoreDraft() {
       try {
-        const raw = sessionStorage.getItem(DRAFT_KEY);
-        if (!raw) return;
-        const data = JSON.parse(raw);
-        const o = data.owner || {};
-        const p = data.pet || {};
-        const c = data.care || {};
-        const fill = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
-        fill("ownerName", o.name);
-        fill("ownerPhone", o.phone);
-        fill("ownerEmail", o.email);
-        fill("lineName", o.lineName);
-        fill("emergencyName", o.emergencyName);
-        fill("emergencyPhone", o.emergencyPhone);
-        fill("petName", p.name);
-        fill("petBreed", p.breed);
-        fill("petAge", String(p.age || "").replace(/[^\d.]/g, ""));
-        fill("petWeight", p.weightKg);
-        fill("vetInfo", c.vetInfo);
-        fill("guardingOther", c.guardingOther);
-        fill("diseaseOther", c.diseaseOther);
-        fill("dewormOther", c.dewormOther);
-        fill("preventativeOther", c.preventativeOther);
-        fill("notes", c.notes);
-        setChecked("petGender", p.gender);
-        setChecked("neutered", p.neutered);
-        setChecked("inHeat", p.inHeat);
-        setChecked("sociability", c.sociability);
-        setChecked("guarding", c.guarding);
-        setChecked("leash", c.leash);
-        setChecked("hasVet", c.hasVet);
-        setChecked("health14", c.health14);
-        setChecked("diseases", c.diseases);
-        setChecked("deworm", c.deworm);
-        setChecked("preventative", c.preventative);
+        const raw = sessionStorage.getItem(DRAFT_KEY) || sessionStorage.getItem(DRAFT_KEY_OLD);
+        let pets = [null];
+        if (raw) {
+          const data = JSON.parse(raw);
+          const o = data.owner || {};
+          const fill = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+          fill("ownerName", o.name);
+          fill("ownerPhone", o.phone);
+          fill("ownerEmail", o.email);
+          fill("lineName", o.lineName);
+          fill("emergencyName", o.emergencyName);
+          fill("emergencyPhone", o.emergencyPhone);
+          if (Array.isArray(data.pets) && data.pets.length) pets = data.pets;
+          else if (data.pet) pets = [{ ...data.pet, ...(data.care || {}) }];
+        }
+        pets.forEach((p) => addPet(p));
+        if (!petCards().length) addPet();
         syncReveals();
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        if (!petCards().length) addPet();
+      }
     }
 
     function emailOk(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+
+    function validatePet(card, index) {
+      let ok = true;
+      const need = (key, cond, msg) => {
+        const id = card.querySelector("[data-k=\"" + key + "\"]");
+        const errKey = id && id.id ? id.id : (id && id.name) || key;
+        if (!cond) { setErr(errKey, msg); ok = false; }
+      };
+      need("name", cardVal(card, "name").length >= 1, "請填寫毛寶名字");
+      need("gender", !!cardRadio(card, "gender"), "請選擇性別");
+      need("breed", cardVal(card, "breed").length >= 1, "請填寫品種");
+      const ageNum = parseFloat(String(cardVal(card, "age")).replace(",", "."));
+      need("age", Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 40, "請填寫年齡（歲）");
+      const w = parseFloat(String(cardVal(card, "weightKg")).replace(",", "."));
+      need("weightKg", Number.isFinite(w) && w >= 0.1 && w <= 99, "請填寫體重（公斤）");
+      need("neutered", !!cardRadio(card, "neutered"), "請選擇是否結紮");
+      need("inHeat", !!cardRadio(card, "inHeat"), "請選擇是否處於發情階段");
+      if (cardChecks(card, "guarding").includes("其他") && !cardVal(card, "guardingOther")) {
+        setErr((card.querySelector("[data-err$='_guarding']") || {}).getAttribute("data-err") || "guarding", "請填寫其他狀況");
+        ok = false;
+      }
+      if (cardRadio(card, "hasVet") === "是" && !cardVal(card, "vetInfo")) {
+        need("vetInfo", false, "請填寫獸醫院名稱與電話");
+      }
+      if (!cardChecks(card, "health14").length) {
+        const k = (card.querySelector("[data-err$='_health14']") || {}).getAttribute("data-err");
+        if (k) setErr(k, "請至少勾選一項近 14 天健康狀況");
+        ok = false;
+      }
+      const dis = cardChecks(card, "diseases");
+      const disKey = (card.querySelector("[data-err$='_diseases']") || {}).getAttribute("data-err");
+      if (!dis.length) {
+        if (disKey) setErr(disKey, "請至少勾選一項疾病紀錄");
+        ok = false;
+      } else if (dis.includes("其他疾病") && !cardVal(card, "diseaseOther")) {
+        if (disKey) setErr(disKey, "請填寫其他疾病名稱");
+        ok = false;
+      }
+      if (cardRadio(card, "deworm") === "其他" && !cardVal(card, "dewormOther")) {
+        const k = (card.querySelector("[data-err$='_deworm']") || {}).getAttribute("data-err");
+        if (k) setErr(k, "請填寫其他驅蟲時間");
+        ok = false;
+      }
+      if (cardRadio(card, "preventative") === "其他" && !cardVal(card, "preventativeOther")) {
+        const k = (card.querySelector("[data-err$='_preventative']") || {}).getAttribute("data-err");
+        if (k) setErr(k, "請填寫其他用藥說明");
+        ok = false;
+      }
+      return ok;
+    }
 
     function validateStep1() {
       clearErrors("step-1");
@@ -1347,43 +1596,11 @@
         const d = digitsOnly(val("emergencyPhone"));
         need("emergencyPhone", d.length >= 8 && d.length <= 15, "請確認緊急聯絡人電話格式");
       }
-      need("petName", val("petName").length >= 1, "請填寫毛寶名字");
-      need("petGender", !!radio("petGender"), "請選擇性別");
-      need("petBreed", val("petBreed").length >= 1, "請填寫品種");
-      const ageNum = parseFloat(String(val("petAge")).replace(",", "."));
-      need("petAge", Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 40, "請填寫年齡（歲）");
-      const w = parseFloat(String(val("petWeight")).replace(",", "."));
-      need("petWeight", Number.isFinite(w) && w >= 0.1 && w <= 99, "請填寫體重（公斤）");
-      need("neutered", !!radio("neutered"), "請選擇是否結紮");
-      need("inHeat", !!radio("inHeat"), "請選擇是否處於發情階段");
-      if (checks("guarding").includes("其他") && !val("guardingOther")) {
-        setErr("guarding", "請填寫其他狀況");
-        ok = false;
-      }
-      if (radio("hasVet") === "是" && !val("vetInfo")) {
-        setErr("vetInfo", "請填寫獸醫院名稱與電話");
-        ok = false;
-      }
-      if (!checks("health14").length) {
-        setErr("health14", "請至少勾選一項近 14 天健康狀況");
-        ok = false;
-      }
-      const dis = checks("diseases");
-      if (!dis.length) {
-        setErr("diseases", "請至少勾選一項疾病紀錄");
-        ok = false;
-      } else if (dis.includes("其他疾病") && !val("diseaseOther")) {
-        setErr("diseases", "請填寫其他疾病名稱");
-        ok = false;
-      }
-      if (radio("deworm") === "其他" && !val("dewormOther")) {
-        setErr("deworm", "請填寫其他驅蟲時間");
-        ok = false;
-      }
-      if (radio("preventative") === "其他" && !val("preventativeOther")) {
-        setErr("preventative", "請填寫其他用藥說明");
-        ok = false;
-      }
+      const cards = petCards();
+      if (!cards.length) ok = false;
+      cards.forEach((card, i) => {
+        if (!validatePet(card, i)) ok = false;
+      });
       if (!ok) firstErrorFocus("step-1");
       return ok;
     }
@@ -1435,11 +1652,20 @@
     }
 
     function showPanel(step) {
+      mode = "register";
+      document.getElementById("nav-register").classList.add("is-on");
+      document.getElementById("nav-lookup").classList.remove("is-on");
+      document.getElementById("lookup-panel").hidden = true;
+      document.querySelector(".progress").classList.remove("is-idle");
       current = step;
-      if (step > maxReached) maxReached = step;
+      if (typeof step === "number" && step > maxReached) maxReached = step;
+      document.getElementById("park-form").hidden = false;
+      document.getElementById("step-success").hidden = step === "success" ? false : true;
+      document.getElementById("lookup-panel").hidden = true;
       $$("[data-panel]").forEach((p) => {
         p.hidden = p.getAttribute("data-panel") !== String(step);
       });
+      if (step === "success") document.getElementById("step-success").hidden = false;
       setProgress(step === "success" ? 3 : step);
       const panel = document.querySelector("[data-panel=\"" + step + "\"]");
       const heading = panel && panel.querySelector("h2");
@@ -1459,8 +1685,9 @@
 
     function fillSummary() {
       const phone = normalizeTwMobile(val("ownerPhone"));
+      const names = petCards().map((c) => cardVal(c, "name")).filter(Boolean).join("、");
       $("#sum-owner").textContent = val("ownerName") || "—";
-      $("#sum-pet").textContent = val("petName") || "—";
+      $("#sum-pet").textContent = names || "—";
       $("#sum-phone").textContent = phone ? prettyPhone(phone) : val("ownerPhone") || "—";
       $("#sum-email").textContent = val("ownerEmail") || "—";
     }
@@ -1583,23 +1810,157 @@
       };
     }
 
-    function startOtpCountdown() {
-      otpLeft = OTP_SEC;
-      const btn = document.getElementById("send-otp");
+    function setMode(next) {
+      const prev = mode;
+      mode = next;
+      document.getElementById("nav-register").classList.toggle("is-on", next === "register");
+      document.getElementById("nav-lookup").classList.toggle("is-on", next === "lookup");
+      const form = document.getElementById("park-form");
+      const success = document.getElementById("step-success");
+      const lookup = document.getElementById("lookup-panel");
+      const progress = document.querySelector(".progress");
+      if (next === "lookup") {
+        form.hidden = true;
+        success.hidden = true;
+        lookup.hidden = false;
+        progress.classList.add("is-idle");
+        goTop();
+        const h = lookup.querySelector("h2");
+        if (h) try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); }
+        announce("查詢案件");
+        return;
+      }
+      lookup.hidden = true;
+      progress.classList.remove("is-idle");
+      if (prev === "lookup") {
+        if (current === "success") {
+          form.hidden = true;
+          success.hidden = false;
+        } else {
+          showPanel(typeof current === "number" ? current : 1);
+        }
+      }
+    }
+
+    async function sendLookupOtp() {
+      clearErrors("lookup-panel");
+      showBanner("lookup", "");
+      const phone = normalizeTwMobile(val("lookupPhone"));
+      if (!phone) {
+        setErr("lookupPhone", "請填寫有效的台灣手機號碼（09 開頭 10 碼）");
+        return;
+      }
+      if (sendingLookup || lookupLeft > 0) return;
+      sendingLookup = true;
+      const btn = document.getElementById("send-lookup-otp");
+      btn.disabled = true;
+      btn.textContent = "發送中…";
+      try {
+        await callGas({
+          action: "sendOtp",
+          phone: phone,
+          phoneE164: toE164(phone),
+          purpose: "lookup"
+        });
+        showBanner("lookup", "驗證碼已寄到此手機當初登記的電子信箱，請查看信件。", "ok");
+        startOtpCountdown(btn, "lookup");
+        document.getElementById("lookupOtp").focus();
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = "發送驗證碼";
+        showBanner("lookup", err.message || "驗證碼發送失敗，請稍後再試。");
+      } finally {
+        sendingLookup = false;
+      }
+    }
+
+    async function doLookup() {
+      if (looking) return;
+      clearErrors("lookup-panel");
+      const phone = normalizeTwMobile(val("lookupPhone"));
+      if (!phone) {
+        setErr("lookupPhone", "請填寫有效的台灣手機號碼（09 開頭 10 碼）");
+        return;
+      }
+      const otp = val("lookupOtp");
+      if (!/^\d{6}$/.test(otp)) {
+        setErr("lookupOtp", "請輸入 6 位數驗證碼");
+        return;
+      }
+      looking = true;
+      const btn = document.getElementById("do-lookup");
+      btn.disabled = true;
+      btn.textContent = "查詢中…";
+      try {
+        const data = await callGas({
+          action: "lookup",
+          phone: phone,
+          otp: otp
+        });
+        const cases = Array.isArray(data.cases) ? data.cases : (data.caseId ? [data] : []);
+        renderLookup(cases);
+        if (!cases.length) showBanner("lookup", "找不到此手機的入園紀錄。", "ok");
+        else showBanner("lookup", "共 " + cases.length + " 筆案件。", "ok");
+      } catch (err) {
+        showBanner("lookup", err.message || "查詢失敗，請稍後再試。");
+      } finally {
+        looking = false;
+        btn.disabled = false;
+        btn.textContent = "查詢案件";
+      }
+    }
+
+    function renderLookup(cases) {
+      const host = document.getElementById("lookup-results");
+      host.innerHTML = "";
+      if (!cases.length) {
+        host.hidden = true;
+        return;
+      }
+      cases.forEach((c) => {
+        const item = document.createElement("article");
+        item.className = "case-item";
+        const names = Array.isArray(c.petNames) ? c.petNames.filter(Boolean).join("、") : (c.petName || "");
+        const id = c.caseId || c.case_id || "";
+        const when = c.submittedAt || c.time || "";
+        const pdf = c.pdfUrl || c.pdf_url || "";
+        item.innerHTML = "<strong></strong><p></p>";
+        item.querySelector("strong").textContent = id || "案件";
+        item.querySelector("p").textContent = [when, names].filter(Boolean).join(" ｜ ");
+        if (pdf && /^https?:\/\//i.test(pdf)) {
+          const a = document.createElement("a");
+          a.href = pdf;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = "下載 PDF";
+          item.appendChild(a);
+        }
+        host.appendChild(item);
+      });
+      host.hidden = false;
+    }
+
+    function startOtpCountdown(btn, kind) {
+      const isLookup = kind === "lookup";
+      if (isLookup) lookupLeft = OTP_SEC;
+      else otpLeft = OTP_SEC;
       btn.disabled = true;
       const tick = () => {
-        if (otpLeft <= 0) {
-          clearInterval(otpTimer);
-          otpTimer = null;
+        const left = isLookup ? lookupLeft : otpLeft;
+        if (left <= 0) {
+          if (isLookup) { clearInterval(lookupTimer); lookupTimer = null; }
+          else { clearInterval(otpTimer); otpTimer = null; }
           btn.disabled = false;
           btn.textContent = "重新發送驗證碼";
           return;
         }
-        btn.textContent = "請稍候 " + otpLeft + " 秒";
-        otpLeft -= 1;
+        btn.textContent = "請稍候 " + left + " 秒";
+        if (isLookup) lookupLeft -= 1;
+        else otpLeft -= 1;
       };
       tick();
-      otpTimer = setInterval(tick, 1000);
+      if (isLookup) lookupTimer = setInterval(tick, 1000);
+      else otpTimer = setInterval(tick, 1000);
     }
 
     async function sendOtp() {
@@ -1626,7 +1987,7 @@
           email: val("ownerEmail")
         });
         showBanner(3, "驗證碼已寄到 " + val("ownerEmail") + "，請查看信箱。", "ok");
-        startOtpCountdown();
+        startOtpCountdown(btn, "register");
         document.getElementById("otp").focus();
       } catch (err) {
         btn.disabled = false;
@@ -1733,6 +2094,20 @@
     document.getElementById("otp").addEventListener("input", (e) => {
       e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
     });
+    document.getElementById("add-pet").addEventListener("click", () => {
+      if (petCards().length >= MAX_PETS) return;
+      const card = addPet();
+      saveDraft();
+      if (card) card.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    });
+    document.getElementById("nav-register").addEventListener("click", () => setMode("register"));
+    document.getElementById("nav-lookup").addEventListener("click", () => setMode("lookup"));
+    document.getElementById("success-lookup").addEventListener("click", () => setMode("lookup"));
+    document.getElementById("send-lookup-otp").addEventListener("click", sendLookupOtp);
+    document.getElementById("do-lookup").addEventListener("click", doLookup);
+    document.getElementById("lookupOtp").addEventListener("input", (e) => {
+      e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
+    });
 
     $$("[data-step-tab]").forEach((li) => {
       li.setAttribute("role", "button");
@@ -1761,8 +2136,10 @@
     });
 
     restoreDraft();
+    if (!petCards().length) addPet();
     syncReveals();
     showPanel(1);
+    if (/lookup/i.test(location.hash || "")) setMode("lookup");
   })();
   </script>
 </body>
