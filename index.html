@@ -465,6 +465,16 @@
     .chips.duo {
       grid-template-columns: 1fr 1fr;
     }
+    .chips.pack {
+      grid-template-columns: 1fr 1fr;
+    }
+    .chips.pack .choice {
+      padding: 10px 10px;
+      font-size: 0.86rem;
+    }
+    .chips.pack .choice.wide {
+      grid-column: 1 / -1;
+    }
     .choice {
       display: flex;
       align-items: flex-start;
@@ -1268,7 +1278,7 @@
           </fieldset>
           <fieldset class="field">
             <legend>近 14 天健康狀況 <span class="req">必填 · 可複選</span></legend>
-            <div class="chips">
+            <div class="chips pack">
               <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="咳嗽" /> 咳嗽</label>
               <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="嘔吐" /> 嘔吐</label>
               <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="腹瀉" /> 腹瀉</label>
@@ -1277,7 +1287,7 @@
               <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="發燒" /> 發燒</label>
               <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="皮膚紅疹" /> 皮膚紅疹</label>
               <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="掉毛異常" /> 掉毛異常</label>
-              <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="黴菌／皮膚病疑慮" /> 黴菌／皮膚病疑慮</label>
+              <label class="choice wide"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="黴菌／皮膚病疑慮" /> 黴菌／皮膚病疑慮</label>
               <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="跳蚤／壁蝨" /> 跳蚤／壁蝨</label>
               <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="傷口" /> 傷口</label>
               <label class="choice"><input type="checkbox" name="p__IDX___health14" data-k="health14" value="術後恢復中" /> 術後恢復中</label>
@@ -1287,7 +1297,7 @@
           </fieldset>
           <fieldset class="field">
             <legend>是否曾被獸醫診斷疾病 <span class="req">必填 · 可複選</span></legend>
-            <div class="chips">
+            <div class="chips pack">
               <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="心臟病" /> 心臟病</label>
               <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="氣管塌陷" /> 氣管塌陷</label>
               <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="癲癇" /> 癲癇</label>
@@ -1296,7 +1306,7 @@
               <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="過敏" /> 過敏</label>
               <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="皮膚病" /> 皮膚病</label>
               <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="其他疾病" data-reveal="p__IDX___diseaseOtherWrap" /> 其他疾病</label>
-              <label class="choice"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="以上皆無" data-none="1" /> 以上皆無</label>
+              <label class="choice wide"><input type="checkbox" name="p__IDX___diseases" data-k="diseases" value="以上皆無" data-none="1" /> 以上皆無</label>
             </div>
             <div class="reveal" id="p__IDX___diseaseOtherWrap" hidden>
               <label class="sr-only" for="p__IDX___diseaseOther">其他疾病說明</label>
@@ -1306,7 +1316,7 @@
           </fieldset>
           <fieldset class="field">
             <legend>最近一次體內外驅蟲時間</legend>
-            <div class="chips">
+            <div class="chips pack">
               <label class="choice"><input type="radio" name="p__IDX___deworm" data-k="deworm" value="半年內" /> 半年內</label>
               <label class="choice"><input type="radio" name="p__IDX___deworm" data-k="deworm" value="一年" /> 一年</label>
               <label class="choice"><input type="radio" name="p__IDX___deworm" data-k="deworm" value="不太確定" /> 不太確定</label>
@@ -1320,10 +1330,10 @@
           </fieldset>
           <fieldset class="field">
             <legend>是否固定施用滴劑或口服藥</legend>
-            <div class="chips">
+            <div class="chips pack">
               <label class="choice"><input type="radio" name="p__IDX___preventative" data-k="preventative" value="是" /> 是</label>
               <label class="choice"><input type="radio" name="p__IDX___preventative" data-k="preventative" value="否" /> 否</label>
-              <label class="choice"><input type="radio" name="p__IDX___preventative" data-k="preventative" value="其他" data-reveal="p__IDX___preventativeOtherWrap" /> 其他並填寫</label>
+              <label class="choice wide"><input type="radio" name="p__IDX___preventative" data-k="preventative" value="其他" data-reveal="p__IDX___preventativeOtherWrap" /> 其他並填寫</label>
             </div>
             <div class="reveal" id="p__IDX___preventativeOtherWrap" hidden>
               <label class="sr-only" for="p__IDX___preventativeOther">其他用藥說明</label>
