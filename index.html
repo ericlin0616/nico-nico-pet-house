@@ -713,7 +713,7 @@
       </li>
       <li data-step-tab="3">
         <span class="num">3</span>
-        <span class="lab"><span class="short">驗證</span><span class="full">手機驗證</span></span>
+        <span class="lab"><span class="short">驗證</span><span class="full">驗證碼確認</span></span>
       </li>
     </ol>
 
@@ -724,7 +724,7 @@
         <article class="card">
           <span class="card-kicker">Step 01</span>
           <h2 tabindex="-1">飼主聯絡資料</h2>
-          <p class="lede">請填寫主要聯絡人資料。手機號碼將於第三步進行簡訊驗證。</p>
+          <p class="lede">請填寫主要聯絡人資料。電子信箱將於第三步收取驗證碼。</p>
           <div id="banner-1"></div>
           <div class="stack">
             <div class="field">
@@ -735,7 +735,7 @@
             <div class="field">
               <label for="ownerPhone">聯絡電話 <span class="req">必填</span></label>
               <input id="ownerPhone" name="ownerPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0912-345-678" />
-              <span class="hint">請填寫台灣手機號碼，將用於簡訊驗證</span>
+              <span class="hint">請填寫台灣手機號碼，方便旅館聯繫與核對案件</span>
               <p class="error" data-err="ownerPhone"></p>
             </div>
             <div class="field">
@@ -1041,13 +1041,14 @@
       <section class="panel" id="step-3" data-panel="3" hidden>
         <article class="card">
           <span class="card-kicker">Step 03</span>
-          <h2 tabindex="-1">手機簡訊驗證</h2>
-          <p class="lede">我們會將 6 位數驗證碼送到您在第一步填寫的手機號碼。</p>
+          <h2 tabindex="-1">驗證碼確認</h2>
+          <p class="lede">驗證碼會寄到您在第一步填寫的電子信箱，用來確認入園資料。</p>
           <div id="banner-3"></div>
           <div class="summary">
             <div><dt>飼主</dt><dd id="sum-owner">—</dd></div>
             <div><dt>毛寶</dt><dd id="sum-pet">—</dd></div>
-            <div><dt>驗證手機</dt><dd id="sum-phone">—</dd></div>
+            <div><dt>聯絡手機</dt><dd id="sum-phone">—</dd></div>
+            <div><dt>驗證信箱</dt><dd id="sum-email">—</dd></div>
           </div>
           <div class="stack" style="margin-top:16px">
             <div class="field">
@@ -1461,6 +1462,7 @@
       $("#sum-owner").textContent = val("ownerName") || "—";
       $("#sum-pet").textContent = val("petName") || "—";
       $("#sum-phone").textContent = phone ? prettyPhone(phone) : val("ownerPhone") || "—";
+      $("#sum-email").textContent = val("ownerEmail") || "—";
     }
 
     function initPad() {
@@ -1590,6 +1592,10 @@
         showBanner(3, "找不到有效的手機號碼，請返回第一步確認。");
         return;
       }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val("ownerEmail"))) {
+        showBanner(3, "找不到有效的電子信箱，請返回第一步確認。");
+        return;
+      }
       if (sending || otpLeft > 0) return;
       sending = true;
       const btn = document.getElementById("send-otp");
@@ -1599,9 +1605,10 @@
         await callGas({
           action: "sendOtp",
           phone: phone,
-          phoneE164: toE164(phone)
+          phoneE164: toE164(phone),
+          email: val("ownerEmail")
         });
-        showBanner(3, "驗證碼已送出，請查看手機簡訊。", "ok");
+        showBanner(3, "驗證碼已寄到 " + val("ownerEmail") + "，請查看信箱。", "ok");
         startOtpCountdown();
         document.getElementById("otp").focus();
       } catch (err) {
