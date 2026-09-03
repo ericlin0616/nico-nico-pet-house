@@ -334,59 +334,178 @@ function createPdf_(folder, caseId, tzNow, owner, list, payload, signBlob) {
 }
 
 function createPdfViaDoc_(caseId, tzNow, owner, list, payload, signBlob) {
+  owner = owner || {};
+  list = list || [];
   var doc = DocumentApp.create("NicoPark 入園資料 " + caseId);
   var body = doc.getBody();
-  body.appendParagraph("Nico Nico Pet House").setHeading(DocumentApp.ParagraphHeading.HEADING1);
-  body.appendParagraph("尼口尼口寵物精緻美容旅館｜NicoPark 毛孩入園資料");
-  body.appendParagraph("案件識別碼：" + caseId + "　送出時間：" + tzNow);
-  body.appendParagraph("一、飼主資料").setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  addLine_(body, "飼主名稱", owner.name);
-  addLine_(body, "聯絡電話", owner.phone);
-  addLine_(body, "電子信箱", owner.email);
-  addLine_(body, "LINE 名稱", owner.lineName);
-  addLine_(body, "緊急聯絡人", owner.emergencyName);
-  addLine_(body, "緊急聯絡人電話", owner.emergencyPhone);
+  body.setMarginTop(22);
+  body.setMarginBottom(22);
+  body.setMarginLeft(26);
+  body.setMarginRight(26);
+  body.clear();
+
+  var top = body.appendTable([["", ""]]);
+  paintCell_(top.getCell(0, 0), "寵物入館資料表", { bg: FORM.oat, fg: FORM.ink, bold: true, size: 16 });
+  paintCell_(top.getCell(0, 1), "Nico Nico Pet House\n尼口尼口寵物精緻美容＆旅館", { bg: FORM.oat, fg: FORM.mute, size: 9, align: DocumentApp.HorizontalAlignment.RIGHT });
+  top.setBorderColor(FORM.line);
+
+  var meta = body.appendTable([["", ""]]);
+  paintCell_(meta.getCell(0, 0), "案件識別碼  " + caseId, { bg: FORM.cream, size: 9 });
+  paintCell_(meta.getCell(0, 1), "填表日期  " + tzNow, { bg: FORM.cream, size: 9, align: DocumentApp.HorizontalAlignment.RIGHT });
+  meta.setBorderColor(FORM.line);
+
+  kvTable_(body, [
+    ["毛孩家長", owner.name, "聯繫電話", owner.phone],
+    ["電子信箱", owner.email, "LINE 名稱", owner.lineName],
+    ["緊急聯絡人", owner.emergencyName, "緊急聯繫電話", owner.emergencyPhone]
+  ]);
+
   (list || []).forEach(function (item, i) {
     var pet = item.pet || {};
     var care = item.care || pet;
-    body.appendParagraph("毛寶 " + (i + 1) + "　" + (pet.name || "")).setHeading(DocumentApp.ParagraphHeading.HEADING2);
-    addLine_(body, "性別", markOpts_(OPTIONS.gender, pet.gender));
-    addLine_(body, "品種", pet.breed);
-    addLine_(body, "年齡", pet.age);
-    addLine_(body, "體重", pet.weightKg ? pet.weightKg + " 公斤" : "");
-    addLine_(body, "結紮", markOpts_(OPTIONS.yesNo, pet.neutered));
-    addLine_(body, "發情", markOpts_(OPTIONS.yesNo, pet.inHeat));
-    addLine_(body, "親狗親人", markOpts_(OPTIONS.sociability, care.sociability));
-    addLine_(body, "護食／敏感", markOpts_(OPTIONS.guarding, care.guarding) + extra_(care.guardingOther));
-    addLine_(body, "牽繩狀況", markOpts_(OPTIONS.leash, care.leash));
-    addLine_(body, "固定獸醫院", markOpts_(OPTIONS.yesNo, care.hasVet) + extra_(care.vetInfo));
-    addLine_(body, "近 14 天健康", markOpts_(OPTIONS.health14, care.health14));
-    addLine_(body, "疾病紀錄", markOpts_(OPTIONS.diseases, care.diseases) + extra_(care.diseaseOther));
-    addLine_(body, "驅蟲", markOpts_(OPTIONS.deworm, care.deworm) + extra_(care.dewormOther));
-    addLine_(body, "滴劑／口服藥", markOpts_(OPTIONS.preventative, care.preventative) + extra_(care.preventativeOther));
-    addLine_(body, "備註", care.notes);
+    bar_(body, "毛孩 " + (i + 1) + (pet.name ? "　" + pet.name : ""));
+    kvTable_(body, [
+      ["毛孩名字", pet.name, "品種", pet.breed],
+      ["年齡", pet.age, "體重", pet.weightKg ? pet.weightKg + " kg" : ""],
+      ["性別", checksLine_(OPTIONS.gender, pet.gender), "節育", checksLine_(OPTIONS.yesNo, pet.neutered)],
+      ["發情階段", checksLine_(OPTIONS.yesNo, pet.inHeat), "定期投藥", checksLine_(OPTIONS.preventative, care.preventative) + extra_(care.preventativeOther)],
+      ["固定獸醫院", checksLine_(OPTIONS.yesNo, care.hasVet), "獸醫院", care.hasVet === "是" ? (care.vetInfo || "") : "無指定"]
+    ]);
+    checkBlock_(body, "病史／疾病紀錄", OPTIONS.diseases, care.diseases, care.diseaseOther);
+    checkBlock_(body, "近 14 天健康狀況", OPTIONS.health14, care.health14, "");
+    checkBlock_(body, "親狗親人", OPTIONS.sociability, care.sociability, "");
+    checkBlock_(body, "護食／敏感", OPTIONS.guarding, care.guarding, care.guardingOther);
+    checkBlock_(body, "散步牽繩", OPTIONS.leash, care.leash, "");
+    checkBlock_(body, "體內外驅蟲", OPTIONS.deworm, care.deworm, care.dewormOther);
+    kvTable_(body, [["注意事項／備註", care.notes || "（無）", "", ""]]);
   });
-  body.appendParagraph("電子簽署").setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  addLine_(body, "同意電子簽署", payload.agreedToTerms ? "是" : "否");
-  addLine_(body, "簽署時間", prettyTime_(payload.agreedAt) || tzNow);
+
+  bar_(body, "飼主簽名");
+  var sign = body.appendTable([["", ""]]);
+  paintCell_(sign.getCell(0, 0), "同意以電子文件與手寫電子簽章完成簽署：" + (payload.agreedToTerms ? "是" : "否") + "\n簽署時間：" + (prettyTime_(payload.agreedAt) || tzNow), { bg: FORM.paper, size: 9 });
+  paintCell_(sign.getCell(0, 1), " ", { bg: FORM.paper });
+  sign.setBorderColor(FORM.line);
   if (signBlob) {
     try {
-      body.appendParagraph("手寫簽名：");
-      var img = body.appendImage(signBlob);
+      var img = sign.getCell(0, 1).appendImage(signBlob);
       var iw = Number(img.getWidth()) || 1;
       var ih = Number(img.getHeight()) || 1;
       if (iw / ih > 8) ih = iw / 3.2;
-      var scale = Math.min(420 / iw, 150 / ih, 1);
+      var scale = Math.min(240 / iw, 90 / ih, 1);
       if (scale <= 0) scale = 0.5;
-      img.setWidth(Math.max(160, iw * scale));
-      img.setHeight(Math.max(50, ih * scale));
+      img.setWidth(Math.max(120, iw * scale));
+      img.setHeight(Math.max(40, ih * scale));
     } catch (e) {}
   }
+
+  var foot = body.appendParagraph("尼口尼口寵物精緻美容＆旅館　NicoPark 入園資料電子正本（含未勾選項目）");
+  foot.setForegroundColor(FORM.mute);
+  foot.setFontSize(8);
+  foot.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
   doc.saveAndClose();
   var docFile = DriveApp.getFileById(doc.getId());
   var pdfBlob = docFile.getAs(MimeType.PDF).setName(caseId + "_NicoPark入園資料.pdf");
   docFile.setTrashed(true);
   return pdfBlob;
+}
+
+var FORM = {
+  pink: "#F4B7C8",
+  oat: "#E9D4C2",
+  cream: "#FFF8F3",
+  paper: "#FFFCFA",
+  bar: "#5C4A42",
+  ink: "#4A372D",
+  mute: "#8A7364",
+  line: "#D9C4B0"
+};
+
+function paintCell_(cell, text, opt) {
+  opt = opt || {};
+  cell.setBackgroundColor(opt.bg || FORM.cream);
+  cell.setPaddingTop(4);
+  cell.setPaddingBottom(4);
+  cell.setPaddingLeft(6);
+  cell.setPaddingRight(6);
+  var txt = text == null || String(text) === "" ? " " : String(text);
+  var para = cell.getChild(0).asParagraph();
+  para.setText(txt);
+  para.setFontSize(opt.size || 9);
+  para.setForegroundColor(opt.fg || FORM.ink);
+  para.setBold(!!opt.bold);
+  if (opt.align) para.setAlignment(opt.align);
+  while (cell.getNumChildren() > 1) {
+    cell.getChild(cell.getNumChildren() - 1).removeFromParent();
+  }
+  return cell;
+}
+
+function kvTable_(body, rows) {
+  var table = body.appendTable(rows.map(function () {
+    return ["", "", "", ""];
+  }));
+  table.setBorderColor(FORM.line);
+  rows.forEach(function (r, i) {
+    paintCell_(table.getCell(i, 0), r[0], { bg: FORM.pink, fg: FORM.ink, bold: true, size: 8 });
+    paintCell_(table.getCell(i, 1), r[1], { bg: FORM.paper, size: 10 });
+    paintCell_(table.getCell(i, 2), r[2], { bg: r[2] ? FORM.pink : FORM.paper, fg: FORM.ink, bold: !!r[2], size: 8 });
+    paintCell_(table.getCell(i, 3), r[3], { bg: FORM.paper, size: 10 });
+  });
+  return table;
+}
+
+function bar_(body, title) {
+  var table = body.appendTable([[title]]);
+  paintCell_(table.getCell(0, 0), title, { bg: FORM.bar, fg: "#F8F3EC", bold: true, size: 10 });
+  table.setBorderColor(FORM.bar);
+  return table;
+}
+
+function checksLine_(items, selected) {
+  var map = selectedMap_(selected);
+  return (items || []).map(function (label) {
+    return (map[label] ? "☑ " : "☐ ") + label;
+  }).join("   ");
+}
+
+function checkBlock_(body, title, items, selected, extraText) {
+  var cols = 4;
+  var map = selectedMap_(selected);
+  var data = [];
+  var i;
+  var first = [title];
+  for (i = 0; i < cols; i++) {
+    first.push(items[i] ? ((map[items[i]] ? "☑ " : "☐ ") + items[i]) : "");
+  }
+  data.push(first);
+  for (i = cols; i < items.length; i += cols) {
+    var r = [""];
+    var j;
+    for (j = 0; j < cols; j++) {
+      r.push(items[i + j] ? ((map[items[i + j]] ? "☑ " : "☐ ") + items[i + j]) : "");
+    }
+    data.push(r);
+  }
+  if (extraText) {
+    var last = ["補充", extraText, "", "", ""];
+    data.push(last);
+  }
+  var table = body.appendTable(data.map(function (r) {
+    return r.map(function () { return ""; });
+  }));
+  table.setBorderColor(FORM.line);
+  data.forEach(function (r, ri) {
+    r.forEach(function (txt, ci) {
+      if (ci === 0) {
+        paintCell_(table.getCell(ri, ci), ri === 0 ? title : (txt === "補充" ? "補充" : " "), { bg: FORM.pink, fg: FORM.ink, bold: true, size: 8 });
+      } else {
+        var on = /^\s*☑/.test(txt);
+        paintCell_(table.getCell(ri, ci), txt, { bg: on ? "#FDE8EE" : FORM.paper, fg: on ? FORM.ink : FORM.mute, bold: on, size: 8 });
+      }
+    });
+  });
+  return table;
 }
 
 var OPTIONS = {
