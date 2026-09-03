@@ -208,6 +208,38 @@
       flex: none;
       white-space: nowrap;
     }
+    .fold {
+      margin-top: 8px;
+      border-radius: var(--radius-lg);
+      background: color-mix(in srgb, var(--warm) 70%, transparent);
+      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.08);
+    }
+    .fold > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      font-weight: 700;
+      color: var(--cocoa-deep);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .fold > summary::-webkit-details-marker { display: none; }
+    .fold > summary::after {
+      content: "展開";
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .fold[open] > summary::after { content: "收合"; }
+    .fold-body { padding: 0 14px 14px; }
+    .fold-hint {
+      margin: 0 0 12px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
     .pet-actions {
       display: flex;
       flex-direction: column;
@@ -664,6 +696,16 @@
       z-index: 4;
       padding: 14px 0 calc(10px + env(safe-area-inset-bottom));
       background: linear-gradient(180deg, transparent 0%, var(--page) 32%);
+    }
+    body.kb-open .actions {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #step-1, #step-2, #step-3, #lookup-panel {
+      padding-bottom: calc(108px + env(safe-area-inset-bottom));
+    }
+    input, select, textarea, .choice, .agree {
+      scroll-margin-bottom: calc(124px + env(safe-area-inset-bottom));
     }
     .btn {
       display: inline-flex;
@@ -1494,6 +1536,10 @@
             </div>
             <p class="error" data-err="p__IDX___vetInfo"></p>
           </fieldset>
+          <details class="fold" data-fold="health">
+            <summary>健康與疾病紀錄 <span class="req">必填</span></summary>
+            <div class="fold-body">
+              <p class="fold-hint">先填完上方基本資料後再展開。近 14 天健康與疾病紀錄皆須至少勾選一項。</p>
           <fieldset class="field">
             <legend>近 14 天健康狀況 <span class="req">必填 · 可複選</span></legend>
             <div class="chips pack">
@@ -1563,6 +1609,8 @@
             <label for="p__IDX___notes">注意事項／備註</label>
             <textarea id="p__IDX___notes" data-k="notes" maxlength="500" placeholder="飲食禁忌、怕的事物、喜歡的安撫方式等"></textarea>
           </div>
+            </div>
+          </details>
         </div>
       </article>
     </template>
@@ -1678,6 +1726,8 @@
       const root = document.getElementById(scope) || document;
       const invalid = root.querySelector(".is-invalid, .error:not(:empty)");
       if (!invalid) return;
+      const fold = invalid.closest("details.fold");
+      if (fold) fold.open = true;
       const field = invalid.classList.contains("is-invalid")
         ? invalid
         : root.querySelector("#" + (invalid.getAttribute("data-err") || ""));
@@ -1789,6 +1839,10 @@
       document.getElementById("pets-root").appendChild(card);
       bindPetCard(card);
       if (data) fillPet(card, data);
+      if (data && (cardChecks(card, "health14").length || cardChecks(card, "diseases").length)) {
+        const fold = card.querySelector("details.fold");
+        if (fold) fold.open = true;
+      }
       refreshPetChrome();
       syncReveals();
       return card;
@@ -1926,12 +1980,16 @@
       if (!cardChecks(card, "health14").length) {
         const k = (card.querySelector("[data-err$='_health14']") || {}).getAttribute("data-err");
         if (k) setErr(k, "請至少勾選一項近 14 天健康狀況");
+        const fold = card.querySelector("details.fold");
+        if (fold) fold.open = true;
         ok = false;
       }
       const dis = cardChecks(card, "diseases");
       const disKey = (card.querySelector("[data-err$='_diseases']") || {}).getAttribute("data-err");
       if (!dis.length) {
         if (disKey) setErr(disKey, "請至少勾選一項疾病紀錄");
+        const fold = card.querySelector("details.fold");
+        if (fold) fold.open = true;
         ok = false;
       } else if (dis.includes("其他疾病") && !cardVal(card, "diseaseOther")) {
         if (disKey) setErr(disKey, "請填寫其他疾病名稱");
@@ -2537,6 +2595,18 @@
       window.clearTimeout(document.getElementById("park-form")._t);
       document.getElementById("park-form")._t = setTimeout(saveDraft, 400);
     });
+
+    function syncKeyboardGap() {
+      const vv = window.visualViewport;
+      const covered = vv ? (window.innerHeight - vv.height) > 90 : false;
+      document.body.classList.toggle("kb-open", covered);
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", syncKeyboardGap);
+      window.visualViewport.addEventListener("scroll", syncKeyboardGap);
+    }
+    window.addEventListener("focusin", () => setTimeout(syncKeyboardGap, 50));
+    window.addEventListener("focusout", () => setTimeout(syncKeyboardGap, 80));
 
     restoreDraft();
     if (!petCards().length) addPet();
