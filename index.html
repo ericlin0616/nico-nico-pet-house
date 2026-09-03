@@ -697,10 +697,14 @@
       padding: 14px 0 calc(10px + env(safe-area-inset-bottom));
       background: linear-gradient(180deg, transparent 0%, var(--page) 32%);
     }
-    body.kb-open .actions {
-      visibility: hidden;
-      pointer-events: none;
+    .need-count {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--cocoa-deep);
     }
+    .need-count[hidden] { display: none !important; }
     #step-1, #step-2, #step-3, #lookup-panel {
       padding-bottom: calc(108px + env(safe-area-inset-bottom));
     }
@@ -1263,6 +1267,7 @@
         </div>
 
         <div class="actions">
+          <p class="need-count" id="need-count" hidden></p>
           <button type="button" class="btn btn-primary" id="to-step-2">下一步：閱讀並簽署</button>
         </div>
       </section>
@@ -1954,82 +1959,141 @@
 
     function emailOk(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
 
-    function validatePet(card, index) {
-      let ok = true;
-      const need = (key, cond, msg) => {
-        const id = card.querySelector("[data-k=\"" + key + "\"]");
-        const errKey = id && id.id ? id.id : (id && id.name) || key;
-        if (!cond) { setErr(errKey, msg); ok = false; }
+    function petIssueList(card) {
+      const byK = (k) => card.querySelector("[data-k=\"" + k + "\"]");
+      const errOf = (k) => {
+        const box = card.querySelector("[data-err$=\"_" + k + "\"]") || card.querySelector("[data-err=\"" + ((byK(k) || {}).id || "") + "\"]");
+        return box ? box.getAttribute("data-err") : ((byK(k) || {}).id || k);
       };
-      need("name", cardVal(card, "name").length >= 1, "請填寫毛寶名字");
-      need("gender", !!cardRadio(card, "gender"), "請選擇性別");
-      need("breed", cardVal(card, "breed").length >= 1, "請填寫品種");
+      const item = (k, ok, msg) => {
+        if (ok) return null;
+        const el = byK(k);
+        return { key: errOf(k), msg, el: el || card.querySelector("[data-err=\"" + errOf(k) + "\"]") };
+      };
+      const list = [];
+      const push = (row) => { if (row) list.push(row); };
+      push(item("name", cardVal(card, "name").length >= 1, "請填寫毛寶名字"));
+      push(item("gender", !!cardRadio(card, "gender"), "請選擇性別"));
+      push(item("breed", cardVal(card, "breed").length >= 1, "請填寫品種"));
       const ageNum = parseFloat(String(cardVal(card, "age")).replace(",", "."));
-      need("age", Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 40, "請填寫年齡（歲）");
+      push(item("age", Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 40, "請填寫年齡（歲）"));
       const w = parseFloat(String(cardVal(card, "weightKg")).replace(",", "."));
-      need("weightKg", Number.isFinite(w) && w >= 0.1 && w <= 99, "請填寫體重（公斤）");
-      need("neutered", !!cardRadio(card, "neutered"), "請選擇是否結紮");
-      need("inHeat", !!cardRadio(card, "inHeat"), "請選擇是否處於發情階段");
+      push(item("weightKg", Number.isFinite(w) && w >= 0.1 && w <= 99, "請填寫體重（公斤）"));
+      push(item("neutered", !!cardRadio(card, "neutered"), "請選擇是否結紮"));
+      push(item("inHeat", !!cardRadio(card, "inHeat"), "請選擇是否處於發情階段"));
       if (cardChecks(card, "guarding").includes("其他") && !cardVal(card, "guardingOther")) {
-        setErr((card.querySelector("[data-err$='_guarding']") || {}).getAttribute("data-err") || "guarding", "請填寫其他狀況");
-        ok = false;
+        push(item("guardingOther", false, "請填寫其他狀況"));
       }
       if (cardRadio(card, "hasVet") === "是" && !cardVal(card, "vetInfo")) {
-        need("vetInfo", false, "請填寫獸醫院名稱與電話");
+        push(item("vetInfo", false, "請填寫獸醫院名稱與電話"));
       }
-      if (!cardChecks(card, "health14").length) {
-        const k = (card.querySelector("[data-err$='_health14']") || {}).getAttribute("data-err");
-        if (k) setErr(k, "請至少勾選一項近 14 天健康狀況");
-        const fold = card.querySelector("details.fold");
-        if (fold) fold.open = true;
-        ok = false;
-      }
+      push(item("health14", cardChecks(card, "health14").length > 0, "請至少勾選一項近 14 天健康狀況"));
       const dis = cardChecks(card, "diseases");
-      const disKey = (card.querySelector("[data-err$='_diseases']") || {}).getAttribute("data-err");
-      if (!dis.length) {
-        if (disKey) setErr(disKey, "請至少勾選一項疾病紀錄");
-        const fold = card.querySelector("details.fold");
-        if (fold) fold.open = true;
-        ok = false;
-      } else if (dis.includes("其他疾病") && !cardVal(card, "diseaseOther")) {
-        if (disKey) setErr(disKey, "請填寫其他疾病名稱");
-        ok = false;
+      if (!dis.length) push(item("diseases", false, "請至少勾選一項疾病紀錄"));
+      else if (dis.includes("其他疾病") && !cardVal(card, "diseaseOther")) {
+        push(item("diseaseOther", false, "請填寫其他疾病名稱"));
       }
       if (cardRadio(card, "deworm") === "其他" && !cardVal(card, "dewormOther")) {
-        const k = (card.querySelector("[data-err$='_deworm']") || {}).getAttribute("data-err");
-        if (k) setErr(k, "請填寫其他驅蟲時間");
-        ok = false;
+        push(item("dewormOther", false, "請填寫其他驅蟲時間"));
       }
       if (cardRadio(card, "preventative") === "其他" && !cardVal(card, "preventativeOther")) {
-        const k = (card.querySelector("[data-err$='_preventative']") || {}).getAttribute("data-err");
-        if (k) setErr(k, "請填寫其他用藥說明");
-        ok = false;
+        push(item("preventativeOther", false, "請填寫其他用藥說明"));
       }
-      return ok;
+      return list;
+    }
+
+    function step1Issues() {
+      const list = [];
+      const add = (key, ok, msg) => {
+        if (!ok) list.push({ key, msg, el: document.getElementById(key) });
+      };
+      add("ownerName", val("ownerName").length >= 1, "請填寫飼主名稱");
+      add("ownerPhone", !!normalizeTwMobile(val("ownerPhone")), "請填寫有效的台灣手機號碼（09 開頭 10 碼）");
+      add("ownerEmail", emailOk(val("ownerEmail")), "請填寫有效的電子信箱");
+      add("lineName", val("lineName").length >= 1, "請填寫 LINE 名稱");
+      if (val("emergencyPhone")) {
+        const d = digitsOnly(val("emergencyPhone"));
+        add("emergencyPhone", d.length >= 8 && d.length <= 15, "請確認緊急聯絡人電話格式");
+      }
+      petCards().forEach((card) => {
+        petIssueList(card).forEach((row) => list.push(row));
+      });
+      if (!petCards().length) {
+        list.push({ key: "add-pet", msg: "請至少登記一隻毛孩", el: document.getElementById("add-pet") });
+      }
+      return list;
+    }
+
+    function paintIssue(issue) {
+      if (!issue) return;
+      setErr(issue.key, issue.msg);
+      if (issue.el) {
+        issue.el.classList.add("is-invalid");
+        const fold = issue.el.closest && issue.el.closest("details.fold");
+        if (fold) fold.open = true;
+      }
+    }
+
+    function updateNeedCount(n) {
+      const el = document.getElementById("need-count");
+      if (!el) return;
+      if (n > 0) {
+        el.hidden = false;
+        el.textContent = "尚有 " + n + " 個必填項目";
+      } else {
+        el.hidden = true;
+        el.textContent = "";
+      }
     }
 
     function validateStep1() {
       clearErrors("step-1");
-      let ok = true;
-      const need = (key, cond, msg) => {
-        if (!cond) { setErr(key, msg); ok = false; }
-      };
-      need("ownerName", val("ownerName").length >= 1, "請填寫飼主名稱");
-      const phone = normalizeTwMobile(val("ownerPhone"));
-      need("ownerPhone", !!phone, "請填寫有效的台灣手機號碼（09 開頭 10 碼）");
-      need("ownerEmail", emailOk(val("ownerEmail")), "請填寫有效的電子信箱");
-      need("lineName", val("lineName").length >= 1, "請填寫 LINE 名稱");
-      if (val("emergencyPhone")) {
-        const d = digitsOnly(val("emergencyPhone"));
-        need("emergencyPhone", d.length >= 8 && d.length <= 15, "請確認緊急聯絡人電話格式");
+      const issues = step1Issues();
+      updateNeedCount(issues.length);
+      if (!issues.length) {
+        showBanner(1, "");
+        return true;
       }
-      const cards = petCards();
-      if (!cards.length) ok = false;
-      cards.forEach((card, i) => {
-        if (!validatePet(card, i)) ok = false;
-      });
-      if (!ok) firstErrorFocus("step-1");
-      return ok;
+      showBanner(1, "尚有 " + issues.length + " 個必填項目");
+      paintIssue(issues[0]);
+      firstErrorFocus("step-1");
+      return false;
+    }
+
+    function fieldIssueKey(el) {
+      if (!el) return "";
+      const k = el.getAttribute("data-k");
+      const card = el.closest(".pet-card, article");
+      if (k && card) {
+        const box = card.querySelector("[data-err$=\"_" + k + "\"]") || card.querySelector("[data-err=\"" + (el.id || "") + "\"]");
+        if (box) return box.getAttribute("data-err");
+        if (el.id) return el.id;
+        if (el.name) return el.name;
+        return k;
+      }
+      if (el.id && document.querySelector("[data-err=\"" + el.id + "\"]")) return el.id;
+      return el.id || el.name || "";
+    }
+
+    function validateTouched(el) {
+      if (!el || current !== 1) return;
+      const key = fieldIssueKey(el);
+      if (!key) return;
+      const issues = step1Issues();
+      const hit = issues.find((i) => i.key === key || i.el === el);
+      const box = document.querySelector("[data-err=\"" + key + "\"]");
+      const field = document.getElementById(el.id) || el;
+      if (hit) {
+        paintIssue(hit);
+      } else {
+        if (box) box.textContent = "";
+        field.classList.remove("is-invalid");
+        field.setAttribute("aria-invalid", "false");
+        $$("[name=\"" + el.name + "\"]").forEach((n) => n.classList.remove("is-invalid"));
+      }
+      updateNeedCount(issues.length);
+      if (issues.length) showBanner(1, "尚有 " + issues.length + " 個必填項目");
+      else showBanner(1, "");
     }
 
     function signatureReady() {
@@ -2533,6 +2597,17 @@
 
     document.getElementById("to-step-2").addEventListener("click", () => {
       if (validateStep1()) { saveDraft(); showPanel(2); }
+    });
+    document.getElementById("step-1").addEventListener("focusout", (e) => {
+      const t = e.target;
+      if (!t || !t.matches("input, textarea, select")) return;
+      if (t.type === "checkbox" || t.type === "radio") return;
+      validateTouched(t);
+    });
+    document.getElementById("step-1").addEventListener("change", (e) => {
+      const t = e.target;
+      if (!t || !t.matches("input, textarea, select")) return;
+      validateTouched(t);
     });
     document.getElementById("to-step-3").addEventListener("click", () => {
       if (validateStep2()) showPanel(3);
