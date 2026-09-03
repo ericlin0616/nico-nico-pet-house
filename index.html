@@ -536,6 +536,15 @@
     .choice:has(input:focus-visible) {
       box-shadow: inset 0 0 0 1.5px var(--cocoa), 0 0 0 3px rgba(172, 157, 141, 0.28);
     }
+    .choice.is-off,
+    .choice:has(input:disabled) {
+      opacity: 0.42;
+      cursor: not-allowed;
+      background: color-mix(in srgb, var(--page) 70%, var(--warm));
+      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.05);
+      color: var(--muted);
+    }
+    .choice.is-off input { pointer-events: none; }
     .reveal {
       margin-top: 8px;
     }
@@ -1747,17 +1756,39 @@
       const boxes = $$("input[name=\"" + name + "\"]", root);
       boxes.forEach((box) => {
         box.addEventListener("change", () => {
-          if (!box.checked) return;
           if (box.getAttribute("data-none") === "1") {
-            boxes.forEach((b) => { if (b !== box) b.checked = false; });
-          } else {
+            if (box.checked) {
+              boxes.forEach((b) => { if (b !== box) b.checked = false; });
+            }
+          } else if (box.checked) {
             boxes.forEach((b) => {
               if (b.getAttribute("data-none") === "1") b.checked = false;
             });
           }
-          syncReveals();
+          syncNoneLock(boxes);
+          saveDraft();
         });
       });
+      syncNoneLock(boxes);
+    }
+
+    function syncNoneLock(boxes) {
+      const none = boxes.find((b) => b.getAttribute("data-none") === "1");
+      if (!none) return;
+      const others = boxes.filter((b) => b !== none);
+      const anyOther = others.some((b) => b.checked);
+      if (anyOther && none.checked) none.checked = false;
+      const lock = none.checked;
+      others.forEach((b) => {
+        if (lock) b.checked = false;
+        b.disabled = lock;
+        const lab = b.closest(".choice");
+        if (lab) lab.classList.toggle("is-off", lock);
+      });
+      none.disabled = false;
+      const noneLab = none.closest(".choice");
+      if (noneLab) noneLab.classList.remove("is-off");
+      syncReveals();
     }
 
     function syncReveals() {
@@ -1877,6 +1908,11 @@
       cardSet(card, "preventative", care.preventative || d.preventative);
       cardSet(card, "preventativeOther", care.preventativeOther || d.preventativeOther || "");
       cardSet(card, "notes", care.notes || d.notes || "");
+      ["guarding", "health14", "diseases"].forEach((g) => {
+        const sample = card.querySelector("input[data-k=\"" + g + "\"]");
+        if (!sample) return;
+        syncNoneLock($$("input[name=\"" + sample.name + "\"]", card));
+      });
     }
 
     function collectPet(card) {
