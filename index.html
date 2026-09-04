@@ -1285,7 +1285,7 @@
             </div>
             <div class="field">
               <label for="emergencyPhone">緊急聯絡人電話</label>
-              <input id="emergencyPhone" name="emergencyPhone" type="tel" inputmode="tel" maxlength="20" />
+              <input id="emergencyPhone" name="emergencyPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="0912345678" />
               <p class="error" data-err="emergencyPhone"></p>
             </div>
           </div>
@@ -2091,8 +2091,7 @@
       add("ownerEmail", emailOk(val("ownerEmail")), "請填寫有效的電子信箱");
       add("lineName", val("lineName").length >= 1, "請填寫 LINE 名稱");
       if (val("emergencyPhone")) {
-        const d = digitsOnly(val("emergencyPhone"));
-        add("emergencyPhone", d.length >= 8 && d.length <= 15, "請確認緊急聯絡人電話格式");
+        add("emergencyPhone", /^\d{10}$/.test(digitsOnly(val("emergencyPhone"))), "請填寫 10 碼電話");
       }
       petCards().forEach((card) => {
         petIssueList(card).forEach((row) => list.push(row));
@@ -2751,6 +2750,10 @@
 
     document.getElementById("to-step-2").addEventListener("click", () => {
       if (validateStep1()) { saveDraft(); showPanel(2); }
+    });
+    document.getElementById("emergencyPhone").addEventListener("input", (e) => {
+      const next = digitsOnly(e.target.value).slice(0, 10);
+      if (e.target.value !== next) e.target.value = next;
     });
     document.getElementById("ownerName").addEventListener("compositionstart", () => {
       ownerNameComposing = true;
