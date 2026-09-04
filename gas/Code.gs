@@ -412,7 +412,7 @@ function createPdfViaDoc_(caseId, tzNow, owner, list, payload, signBlob) {
 
   bar_(body, "飼主簽名");
   var sign = body.appendTable([["", ""]]);
-  paintCell_(sign.getCell(0, 0), "同意以電子文件與手寫電子簽章完成簽署：" + (payload.agreedToTerms ? "是" : "否") + "\n簽署時間：" + (prettyTime_(payload.agreedAt) || tzNow), { bg: FORM.paper, size: 9 });
+  paintCell_(sign.getCell(0, 0), "本人已詳閱並同意採用電子文件與手寫電子簽章方式簽署本契約，其法律效力等同於實體紙本簽章；簽署後系統將自動發送完整合約副本至本人所留電子信箱。\n同意狀態：" + (payload.agreedToTerms ? "是" : "否") + "\n簽署時間：" + (prettyTime_(payload.agreedAt) || tzNow), { bg: FORM.paper, size: 9 });
   paintCell_(sign.getCell(0, 1), " ", { bg: FORM.paper });
   sign.setBorderColor(FORM.line);
   if (signBlob) {
@@ -707,7 +707,7 @@ function buildPdfHtml_(caseId, tzNow, owner, list, payload, signBlob) {
 
   html += '<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;border:1px solid #E7D9CC;">';
   html += section_("三、電子簽署");
-  html += kv_("同意以電子文件與手寫電子簽章完成簽署", payload.agreedToTerms ? "是" : "否");
+  html += kv_("同意採用電子文件與手寫電子簽章（效力等同紙本；副本將寄至所留電子信箱）", payload.agreedToTerms ? "是" : "否");
   html += kv_("簽署時間", prettyTime_(payload.agreedAt) || tzNow);
   html += "</table>";
   html += '<p style="margin:14px 0 6px;font-size:12px;font-weight:700;color:#53453A;">手寫簽名</p>';
