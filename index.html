@@ -713,7 +713,20 @@
       font-weight: 700;
       color: var(--cocoa-deep);
     }
-    .need-count[hidden] { display: none !important; }
+    .cf-box {
+      margin: 4px 0 8px;
+      padding: 12px;
+      border-radius: var(--radius-lg);
+      background: var(--warm);
+      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.08);
+    }
+    .cf-box p {
+      margin: 0 0 8px;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .cf-box iframe, .cf-box .cf-turnstile { max-width: 100%; }
     #step-1, #step-2, #step-3, #lookup-panel {
       padding-bottom: calc(108px + env(safe-area-inset-bottom));
     }
@@ -1388,7 +1401,11 @@
             <div class="field">
               <label for="otp">6 位數驗證碼 <span class="req">必填</span></label>
               <input id="otp" name="otp" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="••••••" />
-              <p class="error" data-err="otp"></p>
+            <p class="error" data-err="otp"></p>
+            </div>
+            <div class="cf-box" id="cf-register-wrap" hidden>
+              <p>人機驗證（防止驗證信被濫用）</p>
+              <div id="cf-register"></div>
             </div>
             <button type="button" class="btn btn-ghost" id="send-otp">發送驗證碼</button>
           </div>
@@ -1434,6 +1451,10 @@
             <label for="lookupOtp">6 位數驗證碼 <span class="req">必填</span></label>
             <input id="lookupOtp" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="••••••" />
             <p class="error" data-err="lookupOtp"></p>
+          </div>
+          <div class="cf-box" id="cf-lookup-wrap" hidden>
+            <p>人機驗證（防止驗證信被濫用）</p>
+            <div id="cf-lookup"></div>
           </div>
           <button type="button" class="btn btn-ghost" id="send-lookup-otp">發送驗證碼</button>
           <button type="button" class="btn btn-primary" id="do-lookup">查詢案件</button>
@@ -1637,6 +1658,13 @@
      * 請勿在前端放入三竹簡訊帳密、API Key 或 Google 憑證。
      */
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfWDmN_fO0lW1sp4vbx8vx16s7DVJgoxNWi_r0ahd7Arq3aJhVhhIGP9EpvL99E7KT/exec";
+    /**
+     * Cloudflare Turnstile 的 Site Key（可公開，不是密鑰）。
+     * 到 https://dash.cloudflare.com 建立 Turnstile 小工具後貼上。
+     * 網域請加入 ericlin0616.github.io
+     * Secret Key 只能貼在 Apps Script 的 CONFIG.TURNSTILE_SECRET，不要放這裡。
+     */
+    const TURNSTILE_SITE_KEY = "";
 
     const DRAFT_KEY = "nicopark-draft-v2";
     const DRAFT_KEY_OLD = "nicopark-draft-v1";
@@ -2312,6 +2340,73 @@
       return /^https:\/\//i.test(u);
     }
 
+    let cfRegId = null;
+    let cfLookupId = null;
+
+    function turnstileEnabled() {
+      return /^0[a-zA-Z0-9_-]{10,}/.test(String(TURNSTILE_SITE_KEY || "").trim())
+        || /^[0-9A-Za-z_-]{10,}$/.test(String(TURNSTILE_SITE_KEY || "").trim());
+    }
+
+    function mountTurnstile(elId) {
+      if (!turnstileEnabled() || !window.turnstile) return null;
+      const el = document.getElementById(elId);
+      if (!el) return null;
+      el.innerHTML = "";
+      try {
+        return window.turnstile.render(el, {
+          sitekey: TURNSTILE_SITE_KEY.trim(),
+          theme: "light",
+          language: "zh-TW",
+          appearance: "always"
+        });
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function loadTurnstile() {
+      if (!turnstileEnabled()) return;
+      ["cf-register-wrap", "cf-lookup-wrap"].forEach((id) => {
+        const w = document.getElementById(id);
+        if (w) w.hidden = false;
+      });
+      if (window.turnstile) {
+        cfRegId = mountTurnstile("cf-register");
+        cfLookupId = mountTurnstile("cf-lookup");
+        return;
+      }
+      if (document.getElementById("cf-turnstile-script")) return;
+      const s = document.createElement("script");
+      s.id = "cf-turnstile-script";
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true;
+      s.defer = true;
+      s.onload = function () {
+        cfRegId = mountTurnstile("cf-register");
+        cfLookupId = mountTurnstile("cf-lookup");
+      };
+      document.head.appendChild(s);
+    }
+
+    function readTurnstile(widgetId) {
+      if (!turnstileEnabled()) return "";
+      if (!window.turnstile) {
+        throw new AppError("人機驗證尚未載入完成，請稍候再試。");
+      }
+      const token = window.turnstile.getResponse(widgetId);
+      if (!token) {
+        throw new AppError("請先完成人機驗證（勾選我不是機器人）。");
+      }
+      return token;
+    }
+
+    function resetTurnstile(widgetId) {
+      try {
+        if (window.turnstile && widgetId != null) window.turnstile.reset(widgetId);
+      } catch (e) { /* ignore */ }
+    }
+
     async function callGas(payload) {
       if (!gasConfigured()) {
         throw new AppError("尚未設定送出網址。請將 Google Apps Script Web App 的 /exec 網址貼到頁面中的 GAS_WEB_APP_URL 後再試。");
@@ -2420,8 +2515,10 @@
           action: "sendOtp",
           phone: phone,
           phoneE164: toE164(phone),
-          purpose: "lookup"
+          purpose: "lookup",
+          turnstileToken: readTurnstile(cfLookupId)
         });
+        resetTurnstile(cfLookupId);
         showBanner("lookup", "驗證碼已寄到此手機當初登記的電子信箱，請查看信件。", "ok");
         startOtpCountdown(btn, "lookup");
         document.getElementById("lookupOtp").focus();
@@ -2455,8 +2552,10 @@
         const data = await callGas({
           action: "lookup",
           phone: phone,
-          otp: otp
+          otp: otp,
+          turnstileToken: readTurnstile(cfLookupId)
         });
+        resetTurnstile(cfLookupId);
         const cases = Array.isArray(data.cases) ? data.cases : (data.caseId ? [data] : []);
         renderLookup(cases);
         if (!cases.length) showBanner("lookup", "找不到此手機的入園紀錄。", "ok");
@@ -2544,8 +2643,10 @@
           action: "sendOtp",
           phone: phone,
           phoneE164: toE164(phone),
-          email: val("ownerEmail")
+          email: val("ownerEmail"),
+          turnstileToken: readTurnstile(cfRegId)
         });
+        resetTurnstile(cfRegId);
         showBanner(3, "驗證碼已寄到 " + val("ownerEmail") + "，請查看信箱。", "ok");
         startOtpCountdown(btn, "register");
         document.getElementById("otp").focus();
@@ -2589,9 +2690,11 @@
           agreedToTerms: true,
           agreedAt: new Date().toISOString(),
           device: deviceInfo(),
-          form: collectForm()
+          form: collectForm(),
+          turnstileToken: readTurnstile(cfRegId)
         };
         const data = await callGas(payload);
+        resetTurnstile(cfRegId);
         const caseId = pick(data, ["caseId", "case_id", "recordId", "ticketId", "id"]);
         const pdfUrl = pick(data, ["pdfUrl", "pdf_url", "pdf"]);
         const message = pick(data, ["message", "msg"]);
@@ -2722,6 +2825,7 @@
     restoreDraft();
     if (!petCards().length) addPet();
     syncReveals();
+    loadTurnstile();
     showPanel(1);
     if (/lookup/i.test(location.hash || "")) setMode("lookup");
 

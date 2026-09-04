@@ -32,7 +32,9 @@ var CONFIG = {
   OTP_MAX_TRIES: 5,
   SEND_MAIL: true,
   ATTACH_PDF: false,
-  MAIL_HOUR_CAP: 40
+  MAIL_HOUR_CAP: 40,
+  // Cloudflare Turnstile Secret Key（絕對不要放到網站 index.html）
+  TURNSTILE_SECRET: ""
 };
 
 var SHEET_HEADERS = [
@@ -65,6 +67,7 @@ function doPost(e) {
 }
 
 function sendOtp_(payload) {
+  verifyTurnstile_(payload.turnstileToken);
   var phone = String(payload.phone || "").replace(/\D/g, "");
   if (!/^09\d{8}$/.test(phone)) {
     throw new Error("手機號碼格式不正確。");
@@ -121,6 +124,7 @@ function petsOf_(form) {
 }
 
 function submit_(payload) {
+  verifyTurnstile_(payload.turnstileToken);
   var form = payload.form || {};
   var owner = form.owner || {};
   var list = petsOf_(form);
@@ -181,6 +185,7 @@ function submit_(payload) {
 }
 
 function lookup_(payload) {
+  verifyTurnstile_(payload.turnstileToken);
   var phone = String(payload.phone || "").replace(/\D/g, "");
   if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
   verifyOtp_(phone, String(payload.otp || ""));
@@ -326,6 +331,31 @@ function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl,
     payload.agreedToTerms ? "是" : "否", payload.agreedAt || "",
     folderUrl, pdfUrl, signUrl
   ]);
+}
+
+function verifyTurnstile_(token) {
+  var secret = String(CONFIG.TURNSTILE_SECRET || "").trim();
+  if (!secret) return;
+  if (!String(token || "").trim()) {
+    throw new Error("請先完成人機驗證後再試。");
+  }
+  var res = UrlFetchApp.fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "post",
+    payload: {
+      secret: secret,
+      response: String(token)
+    },
+    muteHttpExceptions: true
+  });
+  var body;
+  try {
+    body = JSON.parse(res.getContentText() || "{}");
+  } catch (err) {
+    throw new Error("人機驗證暫時無法確認，請稍後再試。");
+  }
+  if (!body || body.success !== true) {
+    throw new Error("人機驗證未通過，請重新勾選後再試。");
+  }
 }
 
 function createPdf_(folder, caseId, tzNow, owner, list, payload, signBlob) {
