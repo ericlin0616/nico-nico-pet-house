@@ -1259,7 +1259,8 @@
           <div class="stack">
             <div class="field">
               <label for="ownerName">飼主名稱 <span class="req">必填</span></label>
-              <input id="ownerName" name="ownerName" type="text" autocomplete="name" maxlength="50" />
+              <input id="ownerName" name="ownerName" type="text" autocomplete="name" maxlength="6" lang="zh-Hant" inputmode="text" placeholder="例如：王小美" />
+              <span class="hint">限中文 2 至 6 個字</span>
               <p class="error" data-err="ownerName"></p>
             </div>
             <div class="field">
@@ -2028,7 +2029,13 @@
       }
     }
 
-    function emailOk(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+    function chineseNameOk(s) {
+      return /^[\u4e00-\u9fff]{2,6}$/.test(String(s || "").trim());
+    }
+
+    function onlyChineseChars(s) {
+      return String(s || "").replace(/[^\u4e00-\u9fff]/g, "").slice(0, 6);
+    }
 
     function petIssueList(card) {
       const byK = (k) => card.querySelector("[data-k=\"" + k + "\"]");
@@ -2078,7 +2085,7 @@
       const add = (key, ok, msg) => {
         if (!ok) list.push({ key, msg, el: document.getElementById(key) });
       };
-      add("ownerName", val("ownerName").length >= 1, "請填寫飼主名稱");
+      add("ownerName", chineseNameOk(val("ownerName")), "請填寫 2 至 6 個中文字的飼主名稱");
       add("ownerPhone", !!normalizeTwMobile(val("ownerPhone")), "請填寫有效的台灣手機號碼（09 開頭 10 碼）");
       add("ownerEmail", emailOk(val("ownerEmail")), "請填寫有效的電子信箱");
       add("lineName", val("lineName").length >= 1, "請填寫 LINE 名稱");
@@ -2743,6 +2750,10 @@
 
     document.getElementById("to-step-2").addEventListener("click", () => {
       if (validateStep1()) { saveDraft(); showPanel(2); }
+    });
+    document.getElementById("ownerName").addEventListener("input", (e) => {
+      const next = onlyChineseChars(e.target.value);
+      if (e.target.value !== next) e.target.value = next;
     });
     document.getElementById("step-1").addEventListener("focusout", (e) => {
       const t = e.target;
