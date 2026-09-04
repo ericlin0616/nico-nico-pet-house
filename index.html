@@ -1259,7 +1259,7 @@
           <div class="stack">
             <div class="field">
               <label for="ownerName">飼主名稱 <span class="req">必填</span></label>
-              <input id="ownerName" name="ownerName" type="text" autocomplete="name" maxlength="6" lang="zh-Hant" inputmode="text" placeholder="例如：王小美" />
+              <input id="ownerName" name="ownerName" type="text" autocomplete="name" maxlength="20" lang="zh-Hant" inputmode="text" placeholder="例如：王小美" />
               <span class="hint">限中文 2 至 6 個字</span>
               <p class="error" data-err="ownerName"></p>
             </div>
@@ -1701,6 +1701,7 @@
     let looking = false;
     let maxReached = 1;
     let petSeq = 0;
+    let ownerNameComposing = false;
 
     function val(id) {
       const el = document.getElementById(id);
@@ -2751,7 +2752,16 @@
     document.getElementById("to-step-2").addEventListener("click", () => {
       if (validateStep1()) { saveDraft(); showPanel(2); }
     });
+    document.getElementById("ownerName").addEventListener("compositionstart", () => {
+      ownerNameComposing = true;
+    });
+    document.getElementById("ownerName").addEventListener("compositionend", (e) => {
+      ownerNameComposing = false;
+      const next = onlyChineseChars(e.target.value);
+      if (e.target.value !== next) e.target.value = next;
+    });
     document.getElementById("ownerName").addEventListener("input", (e) => {
+      if (ownerNameComposing || e.isComposing) return;
       const next = onlyChineseChars(e.target.value);
       if (e.target.value !== next) e.target.value = next;
     });
