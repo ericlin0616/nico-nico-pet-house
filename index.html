@@ -2290,6 +2290,10 @@
       return true;
     }
 
+    function goTop() {
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+    }
+
     function sprinklePaws(count, origin) {
       if (reduced) return;
       const layer = document.getElementById("paw-layer");
@@ -2877,6 +2881,7 @@
     document.getElementById("agreeTerms").addEventListener("change", (e) => {
       if (e.target.checked) sprinklePaws(5, e.target);
     });
+    document.getElementById("to-step-2").addEventListener("click", () => {
       if (validateStep1()) { saveDraft(); showPanel(2); }
     });
     document.getElementById("emergencyPhone").addEventListener("input", (e) => {
