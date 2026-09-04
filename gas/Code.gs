@@ -17,8 +17,15 @@
  *  4. 授權（選你的 Google 帳號 → 進階 → 前往專案）
  *  5. 複製 Web App 的 /exec 網址，貼回網站 index.html 的 GAS_WEB_APP_URL
  *
+ * 前端契約（不要套舊的 book_ 預約骨架）：
+ *  action 只有 sendOtp / submit / lookup
+ *  送出本體：form.owner、form.pets、otp、signatureDataUrl、agreedToTerms、device
+ *  POST：Content-Type application/x-www-form-urlencoded
+ *  欄位 payload = JSON 字串（不是 raw JSON 本體，也不是一堆表單欄位）
+ *  請用 parsePayload_；不要只讀 e.parameter.ownerName 這種舊欄位。
+ *
  * 每次更新本檔後，請「部署 → 管理部署 → 編輯（鉛筆）→ 版本選新版本 → 部署」
- * 否則信件仍會寄出舊的簽名圖／舊 PDF。
+ * 若 /exec 網址變了，同步改 index.html 的 GAS_WEB_APP_URL。
  */
 
 var CONFIG = {
@@ -821,7 +828,11 @@ function dataUrlToBlob_(dataUrl, name) {
 }
 
 function parsePayload_(e) {
+  // 網站送的是 x-www-form-urlencoded，欄位名 payload，值為 JSON 字串。
   if (!e) return {};
+  if (e.parameter && e.parameter.payload) {
+    try { return JSON.parse(e.parameter.payload); } catch (err3) {}
+  }
   if (e.postData && e.postData.contents) {
     var raw = e.postData.contents;
     try { return JSON.parse(raw); } catch (err) {}
@@ -837,9 +848,6 @@ function parsePayload_(e) {
       if (params.payload) return JSON.parse(params.payload);
       return params;
     } catch (err2) {}
-  }
-  if (e.parameter && e.parameter.payload) {
-    try { return JSON.parse(e.parameter.payload); } catch (err3) {}
   }
   return e.parameter || {};
 }

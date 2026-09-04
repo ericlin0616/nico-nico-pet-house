@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="theme-color" content="#AC9D8D" />
   <meta name="description" content="Nico Nico Pet House 尼口尼口寵物精緻美容旅館｜NicoPark 毛孩入園資料與電子簽署" />
@@ -11,7 +11,7 @@
   <meta property="og:image" content="nico-nico-pet-house-logo.png" />
   <title>NicoPark 入園登記｜Nico Nico Pet House</title>
   <link rel="icon" type="image/png" href="nico-nico-pet-house-logo.png" />
-  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"></script>
+  <script src="lib/signature_pad.umd.min.js"></script>
   <style>
     :root {
       --oat: #AC9D8D;
@@ -518,6 +518,7 @@
       background: var(--warm);
       color: var(--ink);
       font: inherit;
+      font-size: 16px;
       padding: 0 14px;
       box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.08);
       appearance: none;
@@ -1785,8 +1786,8 @@
   (function () {
     /**
      * 請將 Google Apps Script Web App 部署後的 /exec 網址貼在下方。
-     * 範例：https://script.google.com/macros/s/XXXX/exec
-     * 請勿在前端放入三竹簡訊帳密、API Key 或 Google 憑證。
+     * 重新部署後網址若改變，這裡一定要一起改，並請客人用 ?v=25 這類參數避開快取。
+     * 請勿在前端放入三竹簡訊帳密、API Key、Google 憑證或 Turnstile Secret。
      */
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfWDmN_fO0lW1sp4vbx8vx16s7DVJgoxNWi_r0ahd7Arq3aJhVhhIGP9EpvL99E7KT/exec";
     /**
@@ -2639,8 +2640,9 @@
       try {
         const res = await fetch(GAS_WEB_APP_URL.trim(), {
           method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+          // 用真正的 form 欄位，避免 CORS 預檢。後端請讀 e.parameter.payload（JSON 字串），不要當一般表單欄位拆。
+          body: "payload=" + encodeURIComponent(JSON.stringify(payload)),
           redirect: "follow",
           signal: controller.signal
         });
