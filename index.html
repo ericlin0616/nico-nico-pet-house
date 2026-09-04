@@ -682,11 +682,14 @@
       height: 18px;
       flex: none;
     }
-    .agree span {
-      font-size: 0.86rem;
-      line-height: 1.55;
-      color: var(--cocoa-deep);
-      font-weight: 600;
+    .agree.is-wait {
+      opacity: 0.55;
+    }
+    .agree.is-wait input { cursor: not-allowed; }
+    .terms-read {
+      margin: 8px 0 0;
+      font-size: 0.78rem;
+      color: var(--muted);
     }
 
     .sign-head {
@@ -898,6 +901,37 @@
       border-radius: var(--radius-md);
       background: var(--warm);
     }
+    .case-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .btn-copy {
+      flex: none;
+      min-height: 36px;
+      width: auto;
+      padding: 6px 12px;
+      font-size: 0.78rem;
+    }
+    .spam-note {
+      margin: 0 0 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .site-foot {
+      text-align: center;
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.03em;
+      line-height: 1.7;
+    }
+    .site-foot a {
+      color: var(--cocoa);
+      text-decoration: none;
+      font-weight: 600;
+    }
     .case-box span {
       display: block;
       font-size: 0.75rem;
@@ -925,14 +959,6 @@
       text-decoration: none;
       font-weight: 600;
       margin-top: 8px;
-    }
-
-    .site-foot {
-      text-align: center;
-      margin-top: 28px;
-      color: var(--muted);
-      font-size: 0.75rem;
-      letter-spacing: 0.04em;
     }
 
     .sr-only {
@@ -1339,6 +1365,7 @@
           <span class="card-kicker">Step 01</span>
           <h2 tabindex="-1">飼主聯絡資料</h2>
           <p class="lede">請填寫主要聯絡人資料。同一飼主可一次登記多隻毛孩。電子信箱將於第三步收取驗證碼。</p>
+          <p class="hint" style="margin:-8px 0 14px">資料會暫存在這支手機，送出前重整頁面也不會不見。</p>
           <div id="banner-1"></div>
           <div class="stack">
             <div class="field">
@@ -1348,7 +1375,7 @@
             </div>
             <div class="field">
               <label for="ownerPhone">聯絡電話 <span class="req">必填</span></label>
-              <input id="ownerPhone" name="ownerPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0912345678" />
+              <input id="ownerPhone" name="ownerPhone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="10" placeholder="0912345678" />
               <span class="hint">請填寫台灣手機號碼，方便旅館聯繫與核對案件</span>
               <p class="error" data-err="ownerPhone"></p>
             </div>
@@ -1366,6 +1393,7 @@
             <div class="field">
               <label for="emergencyName">緊急聯絡人</label>
               <input id="emergencyName" name="emergencyName" type="text" maxlength="50" />
+              <p class="error" data-err="emergencyName"></p>
             </div>
             <div class="field">
               <label for="emergencyPhone">緊急聯絡人電話</label>
@@ -1450,8 +1478,10 @@
             <p>本人已詳細閱讀、理解並同意上述全部條款，並確認所填資料真實。本人同意採用電子文件及手寫電子簽章完成本契約之簽署，其法律效力等同於實體紙本簽章。</p>
           </div>
 
-          <label class="agree">
-            <input type="checkbox" id="agreeTerms" name="agreeTerms" />
+          <p class="terms-read" id="terms-read">請滑動閱讀至文末後，才能勾選同意。</p>
+
+          <label class="agree is-wait" id="agree-label">
+            <input type="checkbox" id="agreeTerms" name="agreeTerms" disabled />
             <span>本人已詳閱並同意採用電子文件與手寫電子簽章方式簽署本契約，其法律效力等同於實體紙本簽章；簽署後系統將自動發送完整合約副本至本人所留電子信箱。</span>
           </label>
           <p class="error" data-err="agreeTerms"></p>
@@ -1516,9 +1546,13 @@
         </div>
         <h2 tabindex="-1" id="success-title">入園資料已送出</h2>
         <p class="lede" id="success-msg">我們已收到毛孩的資料與簽署文件，Nico Nico 將盡快與您聯繫。</p>
+        <p class="spam-note">合約副本與驗證相關信件已寄到您的信箱。若沒看到，請檢查垃圾信件或促銷分頁。</p>
         <div class="case-box" id="case-box" hidden>
           <span>案件識別碼</span>
-          <strong id="case-id"></strong>
+          <div class="case-row">
+            <strong id="case-id"></strong>
+            <button type="button" class="btn btn-ghost btn-copy" id="copy-case">複製</button>
+          </div>
         </div>
         <a class="pdf-link" id="pdf-link" hidden target="_blank" rel="noopener noreferrer">下載入園資料副本（PDF）</a>
         <div class="pet-actions" style="margin-top:16px">
@@ -1536,7 +1570,7 @@
         <div class="stack">
           <div class="field">
             <label for="lookupPhone">聯絡電話 <span class="req">必填</span></label>
-            <input id="lookupPhone" type="tel" inputmode="tel" maxlength="20" placeholder="0912345678" autocomplete="tel" />
+            <input id="lookupPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="0912345678" autocomplete="tel" />
             <p class="error" data-err="lookupPhone"></p>
           </div>
           <div class="field">
@@ -1555,7 +1589,12 @@
       </article>
     </section>
 
-    <footer class="site-foot">Nico Nico Pet House　尼口尼口寵物精緻美容旅館</footer>
+    <footer class="site-foot">
+      Nico Nico Pet House　尼口尼口寵物精緻美容旅館<br />
+      地址　臺中市北屯區敦富五街37號<br />
+      預約　<a href="tel:0901072200">0901-072-200</a>
+      　LINE　<a href="https://lin.ee/01Rj2ph" target="_blank" rel="noopener noreferrer">@niconicopet</a>
+    </footer>
   </div>
 
 
@@ -1786,6 +1825,7 @@
     let maxReached = 1;
     let petSeq = 0;
     let ownerNameComposing = false;
+    let termsRead = false;
 
     function val(id) {
       const el = document.getElementById(id);
@@ -2118,6 +2158,23 @@
       return /^[\u4e00-\u9fff]{2,6}$/.test(String(s || "").trim());
     }
 
+    function emailOk(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+
+    function emailTypoMsg(s) {
+      const m = String(s || "").trim().match(/^([^@]+)@([^@]+)$/);
+      if (!m) return "";
+      const map = {
+        "gmial.com": "gmail.com",
+        "gamil.com": "gmail.com",
+        "gmaill.com": "gmail.com",
+        "gnail.com": "gmail.com",
+        "hotmial.com": "hotmail.com"
+      };
+      const host = m[2].toLowerCase();
+      if (!map[host]) return "";
+      return "信箱網域好像打錯了，您是指 " + m[1] + "@" + map[host] + " 嗎？";
+    }
+
     function onlyChineseChars(s) {
       return String(s || "").replace(/[^\u4e00-\u9fff]/g, "").slice(0, 6);
     }
@@ -2172,11 +2229,20 @@
       };
       add("ownerName", chineseNameOk(val("ownerName")), "請填寫 2 至 6 個中文字的飼主名稱");
       add("ownerPhone", !!normalizeTwMobile(val("ownerPhone")), "請填寫有效的台灣手機號碼（09 開頭 10 碼）");
-      add("ownerEmail", emailOk(val("ownerEmail")), "請填寫有效的電子信箱");
-      add("lineName", val("lineName").length >= 1, "請填寫 LINE 名稱");
-      if (val("emergencyPhone")) {
-        add("emergencyPhone", /^\d{10}$/.test(digitsOnly(val("emergencyPhone"))), "請填寫 10 碼電話");
+      const mail = val("ownerEmail");
+      if (!emailOk(mail)) add("ownerEmail", false, "請填寫有效的電子信箱");
+      else {
+        const typo = emailTypoMsg(mail);
+        if (typo) add("ownerEmail", false, typo);
       }
+      const line = val("lineName");
+      if (!line) add("lineName", false, "請填寫 LINE 名稱");
+      else if (line.charAt(0) === "@") add("lineName", false, "這是 LINE ID，請填顯示名稱");
+      const emName = val("emergencyName");
+      const emPhone = val("emergencyPhone");
+      if (emName && !emPhone) add("emergencyPhone", false, "請一併填寫緊急聯絡人電話");
+      if (emPhone && !emName) add("emergencyName", false, "請一併填寫緊急聯絡人");
+      if (emPhone) add("emergencyPhone", /^\d{10}$/.test(digitsOnly(emPhone)), "請填寫 10 碼電話");
       petCards().forEach((card) => {
         petIssueList(card).forEach((row) => list.push(row));
       });
@@ -2266,7 +2332,7 @@
       clearErrors("step-2");
       let ok = true;
       if (!$("#agreeTerms").checked) {
-        setErr("agreeTerms", "請勾選同意採用電子文件與手寫電子簽章");
+        setErr("agreeTerms", termsRead ? "請勾選同意採用電子文件與手寫電子簽章" : "請先滑動閱讀條款至文末，再勾選同意");
         ok = false;
       }
       if (typeof SignaturePad === "undefined") {
@@ -2288,6 +2354,28 @@
       }
       setErr("otp", "");
       return true;
+    }
+
+    function bindTermsRead() {
+      const box = document.getElementById("terms-box");
+      const cb = document.getElementById("agreeTerms");
+      const lab = document.getElementById("agree-label");
+      const hint = document.getElementById("terms-read");
+      if (!box || !cb) return;
+      const unlock = () => {
+        termsRead = true;
+        cb.disabled = false;
+        if (lab) lab.classList.remove("is-wait");
+        if (hint) hint.textContent = "已閱讀至文末，請勾選下方同意後簽名。";
+      };
+      const check = () => {
+        if (termsRead) { unlock(); return; }
+        const atEnd = box.scrollTop + box.clientHeight >= box.scrollHeight - 24;
+        if (atEnd) unlock();
+      };
+      box.addEventListener("scroll", check, { passive: true });
+      window.setTimeout(check, 80);
+      window.setTimeout(check, 400);
     }
 
     function goTop() {
@@ -2369,6 +2457,7 @@
         window.setTimeout(function () {
           initPad();
           resizeCanvas();
+          bindTermsRead();
         }, 60);
         window.setTimeout(resizeCanvas, 300);
       }
@@ -2645,7 +2734,7 @@
       btn.disabled = true;
       btn.textContent = "發送中…";
       try {
-        await callGas({
+        const data = await callGas({
           action: "sendOtp",
           phone: phone,
           phoneE164: toE164(phone),
@@ -2653,7 +2742,8 @@
           turnstileToken: readTurnstile(cfLookupId)
         });
         resetTurnstile(cfLookupId);
-        showBanner("lookup", "驗證碼已寄到此手機當初登記的電子信箱，請查看信件。", "ok");
+        const masked = data.emailMasked || "當初登記的電子信箱";
+        showBanner("lookup", "驗證碼已寄到 " + masked + "。若沒看到請檢查垃圾信件或促銷分頁。", "ok");
         startOtpCountdown(btn, "lookup");
         document.getElementById("lookupOtp").focus();
       } catch (err) {
@@ -2773,7 +2863,7 @@
       btn.disabled = true;
       btn.textContent = "發送中…";
       try {
-        await callGas({
+        const data = await callGas({
           action: "sendOtp",
           phone: phone,
           phoneE164: toE164(phone),
@@ -2781,7 +2871,8 @@
           turnstileToken: readTurnstile(cfRegId)
         });
         resetTurnstile(cfRegId);
-        showBanner(3, "驗證碼已寄到 " + val("ownerEmail") + "，請查看信箱。", "ok");
+        const masked = data.emailMasked || val("ownerEmail");
+        showBanner(3, "驗證碼已寄到 " + masked + "。若沒看到請檢查垃圾信件或促銷分頁。", "ok");
         startOtpCountdown(btn, "register");
         document.getElementById("otp").focus();
       } catch (err) {
@@ -2883,6 +2974,26 @@
     });
     document.getElementById("to-step-2").addEventListener("click", () => {
       if (validateStep1()) { saveDraft(); showPanel(2); }
+    });
+    document.getElementById("ownerPhone").addEventListener("input", (e) => {
+      const next = digitsOnly(e.target.value).slice(0, 10);
+      if (e.target.value !== next) e.target.value = next;
+    });
+    document.getElementById("lookupPhone").addEventListener("input", (e) => {
+      const next = digitsOnly(e.target.value).slice(0, 10);
+      if (e.target.value !== next) e.target.value = next;
+    });
+    document.getElementById("copy-case").addEventListener("click", async () => {
+      const id = document.getElementById("case-id").textContent || "";
+      const btn = document.getElementById("copy-case");
+      try {
+        await navigator.clipboard.writeText(id);
+        btn.textContent = "已複製";
+        announce("案件編號已複製");
+        window.setTimeout(() => { btn.textContent = "複製"; }, 1600);
+      } catch (err) {
+        btn.textContent = "複製失敗";
+      }
     });
     document.getElementById("emergencyPhone").addEventListener("input", (e) => {
       const next = digitsOnly(e.target.value).slice(0, 10);

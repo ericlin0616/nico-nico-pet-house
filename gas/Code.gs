@@ -22,7 +22,7 @@
  */
 
 var CONFIG = {
-  // 留空：由腳本用「執行身分」的 Google 帳號自動建立雲端資料夾與試算表
+  // 請用店家 Google 帳號部署：寄信、雲端資料夾、試算表才會在店家名下，不要用個人信箱。
   FOLDER_ID: "",
   SHEET_ID: "",
   SHEET_NAME: "入園登記",
@@ -110,7 +110,17 @@ function sendOtp_(payload) {
   });
   bumpHour_("otp");
 
-  return { success: true, channel: "email" };
+  return { success: true, channel: "email", emailMasked: maskEmail_(email) };
+}
+
+function maskEmail_(email) {
+  var s = String(email || "").trim();
+  var at = s.indexOf("@");
+  if (at < 1) return "***";
+  var user = s.slice(0, at);
+  var domain = s.slice(at);
+  if (user.length <= 1) return "*" + domain;
+  return user.charAt(0) + "***" + domain;
 }
 
 function petsOf_(form) {
