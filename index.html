@@ -116,6 +116,7 @@
       overflow: hidden;
       display: grid;
       place-items: center;
+      cursor: pointer;
     }
     .logo-crop img {
       height: 92px;
@@ -123,6 +124,77 @@
       max-width: none;
       object-fit: cover;
       object-position: center 48%;
+      animation: logoFloat 5s ease-in-out infinite;
+    }
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .bone-rule svg { animation: boneTilt 3.6s ease-in-out infinite; }
+    @keyframes boneTilt {
+      0%, 100% { transform: rotate(-6deg); }
+      50% { transform: rotate(6deg); }
+    }
+    .progress li.is-current .num {
+      animation: numPulse 2.2s ease-in-out infinite;
+    }
+    @keyframes numPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(83, 69, 58, 0.18); }
+      50% { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(83, 69, 58, 0); }
+    }
+    .choice {
+      transition: transform var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out), opacity var(--motion-fast) var(--ease-out);
+    }
+    .choice:has(input:checked):not(.is-off) {
+      animation: chipPop 0.38s var(--ease-out);
+    }
+    @keyframes chipPop {
+      0% { transform: scale(0.96); }
+      55% { transform: scale(1.035); }
+      100% { transform: scale(1); }
+    }
+    .fold[open] { animation: foldOpen 0.35s var(--ease-out); }
+    @keyframes foldOpen {
+      from { opacity: 0.7; transform: translateY(-4px); }
+      to { opacity: 1; transform: none; }
+    }
+    .paw-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 90;
+      overflow: hidden;
+    }
+    .paw {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      color: var(--cocoa);
+      opacity: 0;
+      animation: pawHop 1.7s var(--ease-out) forwards;
+      filter: drop-shadow(0 4px 8px rgba(83, 69, 58, 0.18));
+    }
+    @keyframes pawHop {
+      0% { opacity: 0; transform: translate(0, 10px) rotate(var(--rot, -12deg)) scale(0.4); }
+      18% { opacity: 0.85; }
+      100% { opacity: 0; transform: translate(var(--dx, 12px), -90px) rotate(18deg) scale(1); }
+    }
+    .bg-paw {
+      position: fixed;
+      left: -8%;
+      bottom: 12%;
+      width: 64px;
+      height: 64px;
+      color: var(--oat);
+      opacity: 0.14;
+      pointer-events: none;
+      z-index: 0;
+      animation: bgPaw 18s linear infinite;
+    }
+    @keyframes bgPaw {
+      0% { transform: translate(0, 0) rotate(-20deg); }
+      50% { transform: translate(70vw, -18vh) rotate(25deg); }
+      100% { transform: translate(110vw, 8vh) rotate(-10deg); }
     }
     .brand-en {
       font-family: var(--font-display);
@@ -362,8 +434,8 @@
       outline-offset: 2px;
     }
 
-    .panel {
-      animation: panelIn var(--motion-fast) var(--ease-out);
+    .panel.is-in {
+      animation: panelIn 0.42s var(--ease-out);
     }
     @keyframes panelIn {
       from { opacity: 0; transform: translateY(8px); }
@@ -896,6 +968,14 @@
       .panel { animation: none; }
       .btn { transition: none; }
       .welcome-row { transition: none; }
+      .logo-crop img,
+      .bone-rule svg,
+      .progress li.is-current .num,
+      .choice:has(input:checked),
+      .fold[open],
+      .paw,
+      .bg-paw { animation: none !important; }
+      .bg-paw, .paw-layer { display: none; }
     }
 
     .welcome {
@@ -1171,6 +1251,10 @@
   </style>
 </head>
 <body class="welcome-open">
+  <div class="bg-paw" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.8 8.6a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm8.4 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM5.4 12.6a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6Zm13.2 0a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6ZM12 20.6c-3.1 0-5.1-2.1-5.1-4.3 0-2.2 2.3-4.3 5.1-4.3s5.1 2.1 5.1 4.3c0 2.2-2 4.3-5.1 4.3Z"/></svg>
+  </div>
+  <div class="paw-layer" id="paw-layer" aria-hidden="true"></div>
   <div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
     <div class="welcome-sheet">
       <p class="welcome-kicker">niconico park</p>
@@ -1215,7 +1299,7 @@
   <button type="button" class="fab-notice" id="reopen-welcome" hidden aria-label="再次查看須知">須知</button>
   <div class="app">
     <header class="masthead">
-      <div class="logo-crop">
+      <div class="logo-crop" id="logo-egg" title="Nico Nico Pet House">
         <img src="nico-nico-pet-house-logo.png" alt="Nico Nico Pet House 標誌" width="228" height="96" />
       </div>
       <p class="brand-en">Nico Nico Pet House</p>
@@ -2206,9 +2290,36 @@
       return true;
     }
 
-    function goTop() {
-      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+    function sprinklePaws(count, origin) {
+      if (reduced) return;
+      const layer = document.getElementById("paw-layer");
+      if (!layer) return;
+      let x = window.innerWidth / 2;
+      let y = window.innerHeight * 0.62;
+      if (origin && origin.getBoundingClientRect) {
+        const r = origin.getBoundingClientRect();
+        x = r.left + r.width / 2;
+        y = r.top + r.height / 2;
+      }
+      const n = count || 7;
+      for (let i = 0; i < n; i++) {
+        const el = document.createElement("span");
+        el.className = "paw";
+        el.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.8 8.6a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm8.4 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM5.4 12.6a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6Zm13.2 0a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6ZM12 20.6c-3.1 0-5.1-2.1-5.1-4.3 0-2.2 2.3-4.3 5.1-4.3s5.1 2.1 5.1 4.3c0 2.2-2 4.3-5.1 4.3Z"/></svg>';
+        el.style.left = Math.round(x + (Math.random() * 48 - 24)) + "px";
+        el.style.top = Math.round(y + (Math.random() * 20 - 8)) + "px";
+        el.style.setProperty("--dx", (Math.random() * 90 - 45) + "px");
+        el.style.setProperty("--rot", (Math.random() * 40 - 20) + "deg");
+        el.style.animationDelay = (i * 80) + "ms";
+        el.style.width = (18 + Math.random() * 10) + "px";
+        el.style.height = el.style.width;
+        layer.appendChild(el);
+        window.setTimeout(() => el.remove(), 2000 + i * 80);
+      }
     }
+
+    let logoTaps = 0;
+    let logoTapTimer = null;
 
     function setProgress(step) {
       $$("[data-step-tab]").forEach((li) => {
@@ -2258,6 +2369,11 @@
         window.setTimeout(resizeCanvas, 300);
       }
       if (step === 3) fillSummary();
+      if (!reduced && panel) {
+        panel.classList.remove("is-in");
+        void panel.offsetWidth;
+        panel.classList.add("is-in");
+      }
       announce("目前步驟 " + step);
     }
 
@@ -2746,9 +2862,21 @@
       const h = document.getElementById("success-title");
       if (h) try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); }
       announce("入園資料已成功送出");
+      sprinklePaws(10, h);
     }
 
-    document.getElementById("to-step-2").addEventListener("click", () => {
+    document.getElementById("logo-egg").addEventListener("click", () => {
+      logoTaps += 1;
+      window.clearTimeout(logoTapTimer);
+      logoTapTimer = window.setTimeout(() => { logoTaps = 0; }, 900);
+      if (logoTaps < 3) return;
+      logoTaps = 0;
+      sprinklePaws(9, document.getElementById("logo-egg"));
+      announce("有一隻毛孩偷偷路過");
+    });
+    document.getElementById("agreeTerms").addEventListener("change", (e) => {
+      if (e.target.checked) sprinklePaws(5, e.target);
+    });
       if (validateStep1()) { saveDraft(); showPanel(2); }
     });
     document.getElementById("emergencyPhone").addEventListener("input", (e) => {
