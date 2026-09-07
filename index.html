@@ -1699,10 +1699,13 @@
             </div>
             <p class="error" data-err="p__IDX___hasVet"></p>
             <div class="reveal" id="p__IDX___vetWrap" hidden>
-              <label for="p__IDX___vetInfo">指定醫院名稱與電話 <span class="req">必填</span></label>
-              <input id="p__IDX___vetInfo" data-k="vetInfo" type="text" maxlength="80" placeholder="院所名稱與電話" />
+              <label for="p__IDX___vetName">醫院名稱 <span class="req">必填</span></label>
+              <input id="p__IDX___vetName" data-k="vetName" type="text" maxlength="40" placeholder="例如：北屯動物醫院" />
+              <p class="error" data-err="p__IDX___vetName"></p>
+              <label for="p__IDX___vetPhone" style="margin-top:12px">醫院電話 <span class="req">必填</span></label>
+              <input id="p__IDX___vetPhone" data-k="vetPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="0423456789" />
+              <p class="error" data-err="p__IDX___vetPhone"></p>
             </div>
-            <p class="error" data-err="p__IDX___vetInfo"></p>
           </fieldset>
           <details class="fold" data-fold="health">
             <summary>健康與疾病紀錄 <span class="req">必填</span></summary>
@@ -2062,7 +2065,8 @@
       cardSet(card, "guardingOther", care.guardingOther || d.guardingOther || "");
       cardSet(card, "leash", care.leash || d.leash);
       cardSet(card, "hasVet", care.hasVet || d.hasVet);
-      cardSet(card, "vetInfo", care.vetInfo || d.vetInfo || "");
+      cardSet(card, "vetName", care.vetName || d.vetName || "");
+      cardSet(card, "vetPhone", String(care.vetPhone || d.vetPhone || "").replace(/\D/g, "").slice(0, 10));
       cardSet(card, "health14", care.health14 || d.health14);
       cardSet(card, "diseases", care.diseases || d.diseases);
       cardSet(card, "diseaseOther", care.diseaseOther || d.diseaseOther || "");
@@ -2092,7 +2096,9 @@
         guardingOther: cardVal(card, "guardingOther"),
         leash: cardRadio(card, "leash"),
         hasVet: cardRadio(card, "hasVet"),
-        vetInfo: cardVal(card, "vetInfo"),
+        vetName: cardVal(card, "vetName"),
+        vetPhone: digitsOnly(cardVal(card, "vetPhone")).slice(0, 10),
+        vetInfo: [cardVal(card, "vetName"), digitsOnly(cardVal(card, "vetPhone"))].filter(Boolean).join("／"),
         health14: cardChecks(card, "health14"),
         diseases: cardChecks(card, "diseases"),
         diseaseOther: cardVal(card, "diseaseOther"),
@@ -2207,8 +2213,9 @@
         push(item("guardingOther", false, "請填寫其他狀況"));
       }
       push(item("hasVet", !!cardRadio(card, "hasVet"), "請選擇緊急送醫指定醫院"));
-      if (cardRadio(card, "hasVet") === "是" && !cardVal(card, "vetInfo")) {
-        push(item("vetInfo", false, "請填寫指定醫院名稱與電話"));
+      if (cardRadio(card, "hasVet") === "是") {
+        push(item("vetName", cardVal(card, "vetName").trim().length >= 2, "請填寫醫院名稱"));
+        push(item("vetPhone", /^04\d{8}$/.test(digitsOnly(cardVal(card, "vetPhone"))), "請填寫 04 開頭的 10 碼醫院電話"));
       }
       push(item("health14", cardChecks(card, "health14").length > 0, "請至少勾選一項近 14 天健康狀況"));
       const dis = cardChecks(card, "diseases");
@@ -2996,9 +3003,13 @@
         btn.textContent = "複製失敗";
       }
     });
-    document.getElementById("emergencyPhone").addEventListener("input", (e) => {
-      const next = digitsOnly(e.target.value).slice(0, 10);
-      if (e.target.value !== next) e.target.value = next;
+    document.getElementById("step-1").addEventListener("input", (e) => {
+      const t = e.target;
+      if (!t) return;
+      if (t.id === "emergencyPhone" || (t.getAttribute && t.getAttribute("data-k") === "vetPhone")) {
+        const next = digitsOnly(t.value).slice(0, 10);
+        if (t.value !== next) t.value = next;
+      }
     });
     document.getElementById("ownerName").addEventListener("compositionstart", () => {
       ownerNameComposing = true;

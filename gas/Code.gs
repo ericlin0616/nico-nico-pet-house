@@ -154,6 +154,15 @@ function submit_(payload) {
 
   if (!payload.agreedToTerms) throw new Error("請先同意條款並完成簽署。");
   if (!payload.signatureDataUrl) throw new Error("找不到手寫簽名，請返回上一步重簽。");
+  list.forEach(function (item) {
+    var care = item.care || item.pet || {};
+    if (care.hasVet === "是") {
+      if (String(care.vetName || "").trim().length < 2) throw new Error("請填寫指定醫院名稱。");
+      if (!/^04\d{8}$/.test(String(care.vetPhone || "").replace(/\D/g, ""))) {
+        throw new Error("指定醫院電話請填 04 開頭 10 碼。");
+      }
+    }
+  });
 
   var caseId = makeCaseId_();
   var now = new Date();
@@ -331,6 +340,14 @@ function friendlyErr_(err) {
   return m || "伺服器暫時無法處理，請稍後再試。";
 }
 
+function vetLine_(care) {
+  care = care || {};
+  var name = String(care.vetName || "").trim();
+  var phone = String(care.vetPhone || "").replace(/\D/g, "");
+  if (name || phone) return [name, phone].filter(Boolean).join("／");
+  return String(care.vetInfo || "");
+}
+
 function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl, signUrl) {
   var guarding = join_(care.guarding);
   if (care.guardingOther) guarding += (guarding ? "；" : "") + care.guardingOther;
@@ -345,7 +362,7 @@ function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl,
     caseId, tzNow, owner.name || "", owner.phone || "", owner.email || "", owner.lineName || "",
     owner.emergencyName || "", owner.emergencyPhone || "", pet.name || "", pet.gender || "",
     pet.breed || "", pet.age || "", pet.weightKg || "", pet.neutered || "", pet.inHeat || "",
-    care.sociability || "", guarding, care.leash || "", care.hasVet || "", care.vetInfo || "",
+    care.sociability || "", guarding, care.leash || "", care.hasVet || "", vetLine_(care),
     join_(care.health14), diseases, deworm, prev, care.notes || "",
     payload.agreedToTerms ? "是" : "否", payload.agreedAt || "",
     folderUrl, pdfUrl, signUrl
@@ -418,7 +435,7 @@ function createPdfViaDoc_(caseId, tzNow, owner, list, payload, signBlob) {
       ["年齡", pet.age, "體重", pet.weightKg ? pet.weightKg + " kg" : ""],
       ["性別", checksLine_(OPTIONS.gender, pet.gender), "節育", checksLine_(OPTIONS.yesNo, pet.neutered)],
       ["發情階段", checksLine_(OPTIONS.yesNo, pet.inHeat), "定期投藥", checksLine_(OPTIONS.preventative, care.preventative) + extra_(care.preventativeOther)],
-      ["緊急送醫", care.hasVet === "是" ? "指定醫院" : (care.hasVet === "否" ? "同意送就近醫院" : ""), "指定醫院", care.hasVet === "是" ? (care.vetInfo || "") : "無指定"]
+      ["緊急送醫", care.hasVet === "是" ? "指定醫院" : (care.hasVet === "否" ? "同意送就近醫院" : ""), "指定醫院", care.hasVet === "是" ? vetLine_(care) : "無指定"]
     ]);
     checkBlock_(body, "病史／疾病紀錄", OPTIONS.diseases, care.diseases, care.diseaseOther);
     checkBlock_(body, "近 14 天健康狀況", OPTIONS.health14, care.health14, "");
@@ -708,7 +725,7 @@ function buildPdfHtml_(caseId, tzNow, owner, list, payload, signBlob) {
     html += optionTable_(OPTIONS.leash, care.leash);
     html += subhead_("緊急送醫指定醫院");
     html += optionTable_(OPTIONS.yesNo, care.hasVet);
-    html += noteHtml_(care.hasVet === "是" ? care.vetInfo : (care.hasVet === "否" ? "無指定，同意送就近合格動物醫院" : ""));
+    html += noteHtml_(care.hasVet === "是" ? vetLine_(care) : (care.hasVet === "否" ? "無指定，同意送就近合格動物醫院" : ""));
     html += subhead_("近 14 天健康狀況（含未勾選）");
     html += optionTable_(OPTIONS.health14, care.health14);
     html += subhead_("是否曾被獸醫診斷疾病（含未勾選）");
