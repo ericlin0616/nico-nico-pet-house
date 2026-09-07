@@ -477,14 +477,14 @@ function createPdfViaDoc_(caseId, tzNow, owner, list, payload, signBlob) {
 }
 
 var FORM = {
-  pink: "#F4B7C8",
   oat: "#E9D4C2",
   cream: "#FFF8F3",
   paper: "#FFFCFA",
   bar: "#5C4A42",
   ink: "#4A372D",
   mute: "#8A7364",
-  line: "#D9C4B0"
+  line: "#D9C4B0",
+  check: "#F1E6DA"
 };
 
 function paintCell_(cell, text, opt) {
@@ -513,9 +513,9 @@ function kvTable_(body, rows) {
   }));
   table.setBorderColor(FORM.line);
   rows.forEach(function (r, i) {
-    paintCell_(table.getCell(i, 0), r[0], { bg: FORM.pink, fg: FORM.ink, bold: true, size: 8 });
+    paintCell_(table.getCell(i, 0), r[0], { bg: FORM.oat, fg: FORM.ink, bold: true, size: 8 });
     paintCell_(table.getCell(i, 1), r[1], { bg: FORM.paper, size: 10 });
-    paintCell_(table.getCell(i, 2), r[2], { bg: r[2] ? FORM.pink : FORM.paper, fg: FORM.ink, bold: !!r[2], size: 8 });
+    paintCell_(table.getCell(i, 2), r[2], { bg: r[2] ? FORM.oat : FORM.paper, fg: FORM.ink, bold: !!r[2], size: 8 });
     paintCell_(table.getCell(i, 3), r[3], { bg: FORM.paper, size: 10 });
   });
   return table;
@@ -564,10 +564,10 @@ function checkBlock_(body, title, items, selected, extraText) {
   data.forEach(function (r, ri) {
     r.forEach(function (txt, ci) {
       if (ci === 0) {
-        paintCell_(table.getCell(ri, ci), ri === 0 ? title : (txt === "補充" ? "補充" : " "), { bg: FORM.pink, fg: FORM.ink, bold: true, size: 8 });
+        paintCell_(table.getCell(ri, ci), ri === 0 ? title : (txt === "補充" ? "補充" : " "), { bg: FORM.oat, fg: FORM.ink, bold: true, size: 8 });
       } else {
         var on = /^\s*☑/.test(txt);
-        paintCell_(table.getCell(ri, ci), txt, { bg: on ? "#FDE8EE" : FORM.paper, fg: on ? FORM.ink : FORM.mute, bold: on, size: 8 });
+        paintCell_(table.getCell(ri, ci), txt, { bg: on ? FORM.check : FORM.paper, fg: on ? FORM.ink : FORM.mute, bold: on, size: 8 });
       }
     });
   });
