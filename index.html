@@ -1392,12 +1392,12 @@
               <p class="error" data-err="lineName"></p>
             </div>
             <div class="field">
-              <label for="emergencyName">緊急聯絡人</label>
-              <input id="emergencyName" name="emergencyName" type="text" maxlength="50" />
+              <label for="emergencyName">緊急聯絡人 <span class="req">必填</span></label>
+              <input id="emergencyName" name="emergencyName" type="text" maxlength="50" autocomplete="name" />
               <p class="error" data-err="emergencyName"></p>
             </div>
             <div class="field">
-              <label for="emergencyPhone">緊急聯絡人電話</label>
+              <label for="emergencyPhone">緊急聯絡人電話 <span class="req">必填</span></label>
               <input id="emergencyPhone" name="emergencyPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="0912345678" />
               <p class="error" data-err="emergencyPhone"></p>
             </div>
@@ -1443,7 +1443,7 @@
             <h3>三、健康與緊急醫療</h3>
             <ol>
               <li>近十四日若有咳嗽、嘔吐、腹瀉、精神或食慾不佳、皮膚病灶、寄生蟲、傷口、術後恢復或其他異常情形，請據實勾選。本館得要求提供獸醫證明，或建議延後入園。</li>
-              <li>入園期間如發現毛孩有緊急不適、創傷、傳染病疑慮或其他需立即處理之狀況，您同意本館得聯繫您本人或指定之緊急聯絡人，並得送至您填寫之固定獸醫院；若無法及時取得聯繫或未指定醫院，本館得送至就近合格動物醫療機構進行必要處置。</li>
+              <li>入園期間如發現毛孩有緊急不適、創傷、傳染病疑慮或其他需立即處理之狀況，您同意本館得聯繫您本人或指定之緊急聯絡人，並得送至您指定之緊急送醫醫院；若無法及時取得聯繫或您選擇無指定醫院，本館得送至就近合格動物醫療機構進行必要處置。</li>
               <li>因此產生之醫療、交通及其他合理費用，由飼主負擔。本館將在合理範圍內盡速通知。</li>
               <li>本館並非醫療機構，無法取代獸醫師之診斷或治療。</li>
             </ol>
@@ -1692,13 +1692,14 @@
             </div>
           </fieldset>
           <fieldset class="field">
-            <legend>是否有固定獸醫院</legend>
-            <div class="chips duo">
-              <label class="choice"><input type="radio" name="p__IDX___hasVet" data-k="hasVet" value="是" data-reveal="p__IDX___vetWrap" /> 是</label>
-              <label class="choice"><input type="radio" name="p__IDX___hasVet" data-k="hasVet" value="否" /> 否</label>
+            <legend>緊急送醫指定醫院 <span class="req">必填</span></legend>
+            <div class="chips">
+              <label class="choice"><input type="radio" name="p__IDX___hasVet" data-k="hasVet" value="是" data-reveal="p__IDX___vetWrap" /> 指定下列醫院</label>
+              <label class="choice"><input type="radio" name="p__IDX___hasVet" data-k="hasVet" value="否" /> 無指定，同意送就近合格動物醫院</label>
             </div>
+            <p class="error" data-err="p__IDX___hasVet"></p>
             <div class="reveal" id="p__IDX___vetWrap" hidden>
-              <label for="p__IDX___vetInfo">獸醫院名稱與電話 <span class="req">必填</span></label>
+              <label for="p__IDX___vetInfo">指定醫院名稱與電話 <span class="req">必填</span></label>
               <input id="p__IDX___vetInfo" data-k="vetInfo" type="text" maxlength="80" placeholder="院所名稱與電話" />
             </div>
             <p class="error" data-err="p__IDX___vetInfo"></p>
@@ -2205,8 +2206,9 @@
       if (cardChecks(card, "guarding").includes("其他") && !cardVal(card, "guardingOther")) {
         push(item("guardingOther", false, "請填寫其他狀況"));
       }
+      push(item("hasVet", !!cardRadio(card, "hasVet"), "請選擇緊急送醫指定醫院"));
       if (cardRadio(card, "hasVet") === "是" && !cardVal(card, "vetInfo")) {
-        push(item("vetInfo", false, "請填寫獸醫院名稱與電話"));
+        push(item("vetInfo", false, "請填寫指定醫院名稱與電話"));
       }
       push(item("health14", cardChecks(card, "health14").length > 0, "請至少勾選一項近 14 天健康狀況"));
       const dis = cardChecks(card, "diseases");
@@ -2239,11 +2241,8 @@
       const line = val("lineName");
       if (!line) add("lineName", false, "請填寫 LINE 名稱");
       else if (line.charAt(0) === "@") add("lineName", false, "這是 LINE ID，請填顯示名稱");
-      const emName = val("emergencyName");
-      const emPhone = val("emergencyPhone");
-      if (emName && !emPhone) add("emergencyPhone", false, "請一併填寫緊急聯絡人電話");
-      if (emPhone && !emName) add("emergencyName", false, "請一併填寫緊急聯絡人");
-      if (emPhone) add("emergencyPhone", /^\d{10}$/.test(digitsOnly(emPhone)), "請填寫 10 碼電話");
+      add("emergencyName", val("emergencyName").trim().length >= 2, "請填寫緊急聯絡人");
+      add("emergencyPhone", /^\d{10}$/.test(digitsOnly(val("emergencyPhone"))), "請填寫 10 碼緊急聯絡人電話");
       petCards().forEach((card) => {
         petIssueList(card).forEach((row) => list.push(row));
       });

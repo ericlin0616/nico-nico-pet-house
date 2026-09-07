@@ -47,7 +47,7 @@ var CONFIG = {
 var SHEET_HEADERS = [
   "案件識別碼", "送出時間", "飼主名稱", "聯絡電話", "電子信箱", "LINE名稱",
   "緊急聯絡人", "緊急聯絡人電話", "毛寶名字", "性別", "品種", "年齡", "體重kg",
-  "是否結紮", "是否發情", "親狗親人", "護食護玩具", "牽繩狀況", "固定獸醫院",
+  "是否結紮", "是否發情", "親狗親人", "護食護玩具", "牽繩狀況", "緊急送醫指定",
   "獸醫院名稱與電話", "近14天健康", "疾病紀錄", "驅蟲時間", "滴劑口服藥",
   "注意事項", "已同意條款", "簽署時間", "雲端資料夾", "PDF連結", "簽名檔"
 ];
@@ -148,6 +148,8 @@ function submit_(payload) {
   if (!list.length) throw new Error("請至少填寫一隻毛孩的資料。");
   var phone = String(owner.phone || "").replace(/\D/g, "");
   if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
+  if (String(owner.emergencyName || "").trim().length < 2) throw new Error("請填寫緊急聯絡人。");
+  if (!/^\d{10}$/.test(String(owner.emergencyPhone || "").replace(/\D/g, ""))) throw new Error("請填寫 10 碼緊急聯絡人電話。");
   verifyOtp_(phone, String(payload.otp || ""));
 
   if (!payload.agreedToTerms) throw new Error("請先同意條款並完成簽署。");
@@ -416,7 +418,7 @@ function createPdfViaDoc_(caseId, tzNow, owner, list, payload, signBlob) {
       ["年齡", pet.age, "體重", pet.weightKg ? pet.weightKg + " kg" : ""],
       ["性別", checksLine_(OPTIONS.gender, pet.gender), "節育", checksLine_(OPTIONS.yesNo, pet.neutered)],
       ["發情階段", checksLine_(OPTIONS.yesNo, pet.inHeat), "定期投藥", checksLine_(OPTIONS.preventative, care.preventative) + extra_(care.preventativeOther)],
-      ["固定獸醫院", checksLine_(OPTIONS.yesNo, care.hasVet), "獸醫院", care.hasVet === "是" ? (care.vetInfo || "") : "無指定"]
+      ["緊急送醫", care.hasVet === "是" ? "指定醫院" : (care.hasVet === "否" ? "同意送就近醫院" : ""), "指定醫院", care.hasVet === "是" ? (care.vetInfo || "") : "無指定"]
     ]);
     checkBlock_(body, "病史／疾病紀錄", OPTIONS.diseases, care.diseases, care.diseaseOther);
     checkBlock_(body, "近 14 天健康狀況", OPTIONS.health14, care.health14, "");
@@ -704,9 +706,9 @@ function buildPdfHtml_(caseId, tzNow, owner, list, payload, signBlob) {
     html += noteHtml_(care.guardingOther);
     html += subhead_("平時散步時牽繩狀況");
     html += optionTable_(OPTIONS.leash, care.leash);
-    html += subhead_("是否有固定獸醫院");
+    html += subhead_("緊急送醫指定醫院");
     html += optionTable_(OPTIONS.yesNo, care.hasVet);
-    html += noteHtml_(care.hasVet === "是" ? care.vetInfo : "");
+    html += noteHtml_(care.hasVet === "是" ? care.vetInfo : (care.hasVet === "否" ? "無指定，同意送就近合格動物醫院" : ""));
     html += subhead_("近 14 天健康狀況（含未勾選）");
     html += optionTable_(OPTIONS.health14, care.health14);
     html += subhead_("是否曾被獸醫診斷疾病（含未勾選）");
