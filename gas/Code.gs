@@ -153,6 +153,7 @@ function submit_(payload) {
   verifyOtp_(phone, String(payload.otp || ""));
 
   if (!payload.agreedToTerms) throw new Error("請先同意條款並完成簽署。");
+  if (!payload.agreedToPhoto) throw new Error("請先同意毛孩影像拍攝與使用。");
   if (!payload.signatureDataUrl) throw new Error("找不到手寫簽名，請返回上一步重簽。");
   list.forEach(function (item) {
     var care = item.care || item.pet || {};
@@ -364,7 +365,7 @@ function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl,
     pet.breed || "", pet.age || "", pet.weightKg || "", pet.neutered || "", pet.inHeat || "",
     care.sociability || "", guarding, care.leash || "", care.hasVet || "", vetLine_(care),
     join_(care.health14), diseases, deworm, prev, care.notes || "",
-    payload.agreedToTerms ? "是" : "否", payload.agreedAt || "",
+    payload.agreedToTerms && payload.agreedToPhoto ? "電子簽章、毛孩影像" : (payload.agreedToTerms ? "電子簽章" : "否"), payload.agreedAt || "",
     folderUrl, pdfUrl, signUrl
   ]);
 }
@@ -448,7 +449,7 @@ function createPdfViaDoc_(caseId, tzNow, owner, list, payload, signBlob) {
 
   bar_(body, "飼主簽名");
   var sign = body.appendTable([["", ""]]);
-  paintCell_(sign.getCell(0, 0), "本人已詳閱並同意採用電子文件與手寫電子簽章方式簽署本契約，其法律效力等同於實體紙本簽章；簽署後系統將自動發送完整合約副本至本人所留電子信箱。\n同意狀態：" + (payload.agreedToTerms ? "是" : "否") + "\n簽署時間：" + (prettyTime_(payload.agreedAt) || tzNow), { bg: FORM.paper, size: 9 });
+  paintCell_(sign.getCell(0, 0), "本人已詳閱並同意採用電子文件與手寫電子簽章方式簽署本契約，其法律效力等同於實體紙本簽章。\n本人同意本館於入園期間拍攝毛孩影像，並依條款所定範圍用於照護紀錄、官方網站及社群宣傳；本同意不及於以本人之可辨識面貌作為主要拍攝或宣傳對象。本人了解已公開內容可能無法全部回收。\n電子簽章同意：" + (payload.agreedToTerms ? "是" : "否") + "　毛孩影像同意：" + (payload.agreedToPhoto ? "是" : "否") + "\n簽署時間：" + (prettyTime_(payload.agreedAt) || tzNow), { bg: FORM.paper, size: 9 });
   paintCell_(sign.getCell(0, 1), " ", { bg: FORM.paper });
   sign.setBorderColor(FORM.line);
   if (signBlob) {
@@ -744,6 +745,7 @@ function buildPdfHtml_(caseId, tzNow, owner, list, payload, signBlob) {
   html += '<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;border:1px solid #E7D9CC;">';
   html += section_("三、電子簽署");
   html += kv_("同意採用電子文件與手寫電子簽章（效力等同紙本；副本將寄至所留電子信箱）", payload.agreedToTerms ? "是" : "否");
+  html += kv_("同意毛孩影像拍攝與使用（官方網站及社群宣傳；不及於本人之可辨識面貌）", payload.agreedToPhoto ? "是" : "否");
   html += kv_("簽署時間", prettyTime_(payload.agreedAt) || tzNow);
   html += "</table>";
   html += '<p style="margin:14px 0 6px;font-size:12px;font-weight:700;color:#53453A;">手寫簽名</p>';
