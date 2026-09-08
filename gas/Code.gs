@@ -780,7 +780,7 @@ function sendCustomerMail_(owner, names, caseId, pdfFile) {
       "我們已收到毛寶 " + petLabel + " 的入園資料與電子簽署。\n" +
       "案件識別碼：" + caseId + "\n" +
       (pdfUrl ? ("完整表單 PDF：" + pdfUrl + "\n") : "") +
-      "也可到網站以手機驗證碼查詢案件。\n\n" +
+      "也可到網站以電子郵件驗證碼查詢案件。\n\n" +
       "Nico Nico Pet House 尼口尼口寵物精緻美容旅館\n"
   };
   if (CONFIG.ATTACH_PDF && pdfFile) {
