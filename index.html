@@ -1354,7 +1354,7 @@
       </li>
       <li data-step-tab="3">
         <span class="num">3</span>
-        <span class="lab"><span class="short">驗證</span><span class="full">驗證碼確認</span></span>
+        <span class="lab"><span class="short">信箱</span><span class="full">電子郵件認證</span></span>
       </li>
     </ol>
 
@@ -1365,7 +1365,7 @@
         <article class="card">
           <span class="card-kicker">Step 01</span>
           <h2 tabindex="-1">飼主聯絡資料</h2>
-          <p class="lede">請填寫主要聯絡人資料。同一飼主可一次登記多隻毛孩。電子信箱將於第三步收取驗證碼。</p>
+          <p class="lede">請填寫主要聯絡人資料。同一飼主可一次登記多隻毛孩。電子信箱將於第三步收取驗證碼，作為身份認證。</p>
           <p class="hint" style="margin:-8px 0 14px">資料會暫存在這支手機，送出前重整頁面也不會不見。</p>
           <div id="banner-1"></div>
           <div class="stack">
@@ -1377,7 +1377,7 @@
             <div class="field">
               <label for="ownerPhone">聯絡電話 <span class="req">必填</span></label>
               <input id="ownerPhone" name="ownerPhone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="10" placeholder="0912345678" />
-              <span class="hint">請填寫台灣手機號碼，方便旅館聯繫與核對案件</span>
+              <span class="hint">請填寫台灣手機號碼，方便旅館聯繫</span>
               <p class="error" data-err="ownerPhone"></p>
             </div>
             <div class="field">
@@ -1477,13 +1477,13 @@
             <ol>
               <li>蒐集者：Nico Nico Pet House 尼口尼口寵物精緻美容旅館。</li>
               <li>蒐集目的：毛孩入園評估與照護、客戶聯繫、緊急醫療聯繫、服務品質管理、客訴與帳務處理、法令遵循及爭議處理。</li>
-              <li>蒐集項目：飼主姓名、聯絡電話、電子信箱、LINE 名稱、緊急聯絡資料、毛孩基本資料與健康照護資訊、簽名圖檔、驗證紀錄、裝置資訊，以及於您同意範圍內拍攝之毛孩影像。</li>
+              <li>蒐集項目：飼主姓名、聯絡電話、電子信箱、LINE 名稱、緊急聯絡資料、毛孩基本資料與健康照護資訊、簽名圖檔、電子郵件驗證紀錄、裝置資訊，以及於您同意範圍內拍攝之毛孩影像。</li>
               <li>利用期間：服務期間及結束後，依法令或為主張／防禦權利所必要之合理保存期間。</li>
               <li>利用地區：臺灣地區，以及為提供簡訊發送、雲端備份所必要之處理地。</li>
               <li>利用對象：本館負責人及受託處理事務之人員、緊急醫療機構、依法有權機關。</li>
               <li>利用方式：以電子或紙本方式為儲存、比對、傳遞與聯繫。</li>
               <li>您得依《個人資料保護法》向本館查詢、請求閱覽、製給複製本、補充更正、請求停止蒐集處理利用或刪除。惟依法或為履行契約所必要之資料，本館得拒絕刪除。</li>
-              <li>若您不提供必要資料，或未完成條款同意、手寫簽署與手機驗證，本館將無法完成入園登記。</li>
+              <li>若您不提供必要資料，或未完成條款同意、手寫簽署與電子郵件驗證，本館將無法完成入園登記。</li>
             </ol>
 
             <h3>簽署聲明</h3>
@@ -1520,7 +1520,7 @@
         </article>
 
         <div class="actions">
-          <button type="button" class="btn btn-primary" id="to-step-3">下一步：手機驗證</button>
+          <button type="button" class="btn btn-primary" id="to-step-3">下一步：電子郵件認證</button>
           <button type="button" class="btn btn-back" id="back-1">返回</button>
         </div>
       </section>
@@ -1528,13 +1528,13 @@
       <section class="panel" id="step-3" data-panel="3" hidden>
         <article class="card">
           <span class="card-kicker">Step 03</span>
-          <h2 tabindex="-1">驗證碼確認</h2>
-          <p class="lede">驗證碼會寄到您在第一步填寫的電子信箱，用來確認入園資料。</p>
+          <h2 tabindex="-1">電子郵件認證</h2>
+          <p class="lede">驗證碼會寄到您的電子信箱，用來確認是本人填寫。聯絡電話僅供旅館聯繫，不再作為驗證方式。</p>
           <div id="banner-3"></div>
           <div class="summary">
             <div><dt>飼主</dt><dd id="sum-owner">—</dd></div>
             <div><dt>毛寶</dt><dd id="sum-pet">—</dd></div>
-            <div><dt>聯絡手機</dt><dd id="sum-phone">—</dd></div>
+            <div><dt>聯絡電話</dt><dd id="sum-phone">—</dd></div>
             <div><dt>驗證信箱</dt><dd id="sum-email">—</dd></div>
           </div>
           <div class="stack" style="margin-top:16px">
@@ -1583,13 +1583,13 @@
       <article class="card">
         <span class="card-kicker">Lookup</span>
         <h2 tabindex="-1">查詢入園案件</h2>
-        <p class="lede">請輸入當初登記的手機號碼。驗證碼會寄到該筆資料的電子信箱，通過後即可查看案件編號與 PDF。</p>
+        <p class="lede">請輸入當初登記的電子信箱。驗證碼會寄到此信箱，通過後即可查看案件編號與 PDF。</p>
         <div id="banner-lookup"></div>
         <div class="stack">
           <div class="field">
-            <label for="lookupPhone">聯絡電話 <span class="req">必填</span></label>
-            <input id="lookupPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="0912345678" autocomplete="tel" />
-            <p class="error" data-err="lookupPhone"></p>
+            <label for="lookupEmail">電子信箱 <span class="req">必填</span></label>
+            <input id="lookupEmail" type="email" inputmode="email" maxlength="120" autocomplete="email" />
+            <p class="error" data-err="lookupEmail"></p>
           </div>
           <div class="field">
             <label for="lookupOtp">6 位數驗證碼 <span class="req">必填</span></label>
@@ -2756,9 +2756,9 @@
     async function sendLookupOtp() {
       clearErrors("lookup-panel");
       showBanner("lookup", "");
-      const phone = normalizeTwMobile(val("lookupPhone"));
-      if (!phone) {
-        setErr("lookupPhone", "請填寫有效的台灣手機號碼（09 開頭 10 碼）");
+      const email = val("lookupEmail").trim();
+      if (!emailOk(email)) {
+        setErr("lookupEmail", "請填寫有效的電子信箱");
         return;
       }
       if (sendingLookup || lookupLeft > 0) return;
@@ -2769,13 +2769,12 @@
       try {
         const data = await callGas({
           action: "sendOtp",
-          phone: phone,
-          phoneE164: toE164(phone),
+          email: email,
           purpose: "lookup",
           turnstileToken: readTurnstile(cfLookupId)
         });
         resetTurnstile(cfLookupId);
-        const masked = data.emailMasked || "當初登記的電子信箱";
+        const masked = data.emailMasked || email;
         showBanner("lookup", "驗證碼已寄到 " + masked + "。若沒看到請檢查垃圾信件或促銷分頁。", "ok");
         startOtpCountdown(btn, "lookup");
         document.getElementById("lookupOtp").focus();
@@ -2791,9 +2790,9 @@
     async function doLookup() {
       if (looking) return;
       clearErrors("lookup-panel");
-      const phone = normalizeTwMobile(val("lookupPhone"));
-      if (!phone) {
-        setErr("lookupPhone", "請填寫有效的台灣手機號碼（09 開頭 10 碼）");
+      const email = val("lookupEmail").trim();
+      if (!emailOk(email)) {
+        setErr("lookupEmail", "請填寫有效的電子信箱");
         return;
       }
       const otp = val("lookupOtp");
@@ -2808,14 +2807,14 @@
       try {
         const data = await callGas({
           action: "lookup",
-          phone: phone,
+          email: email,
           otp: otp,
           turnstileToken: readTurnstile(cfLookupId)
         });
         resetTurnstile(cfLookupId);
         const cases = Array.isArray(data.cases) ? data.cases : (data.caseId ? [data] : []);
         renderLookup(cases);
-        if (!cases.length) showBanner("lookup", "找不到此手機的入園紀錄。", "ok");
+        if (!cases.length) showBanner("lookup", "找不到此信箱的入園紀錄。", "ok");
         else showBanner("lookup", "共 " + cases.length + " 筆案件。", "ok");
       } catch (err) {
         showBanner("lookup", err.message || "查詢失敗，請稍後再試。");
@@ -2881,12 +2880,8 @@
 
     async function sendOtp() {
       clearErrors("step-3");
-      const phone = normalizeTwMobile(val("ownerPhone"));
-      if (!phone) {
-        showBanner(3, "找不到有效的手機號碼，請返回第一步確認。");
-        return;
-      }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val("ownerEmail"))) {
+      const email = val("ownerEmail").trim();
+      if (!emailOk(email)) {
         showBanner(3, "找不到有效的電子信箱，請返回第一步確認。");
         return;
       }
@@ -2898,13 +2893,11 @@
       try {
         const data = await callGas({
           action: "sendOtp",
-          phone: phone,
-          phoneE164: toE164(phone),
-          email: val("ownerEmail"),
+          email: email,
           turnstileToken: readTurnstile(cfRegId)
         });
         resetTurnstile(cfRegId);
-        const masked = data.emailMasked || val("ownerEmail");
+        const masked = data.emailMasked || email;
         showBanner(3, "驗證碼已寄到 " + masked + "。若沒看到請檢查垃圾信件或促銷分頁。", "ok");
         startOtpCountdown(btn, "register");
         document.getElementById("otp").focus();
@@ -3010,10 +3003,6 @@
       if (validateStep1()) { saveDraft(); showPanel(2); }
     });
     document.getElementById("ownerPhone").addEventListener("input", (e) => {
-      const next = digitsOnly(e.target.value).slice(0, 10);
-      if (e.target.value !== next) e.target.value = next;
-    });
-    document.getElementById("lookupPhone").addEventListener("input", (e) => {
       const next = digitsOnly(e.target.value).slice(0, 10);
       if (e.target.value !== next) e.target.value = next;
     });

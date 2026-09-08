@@ -5,7 +5,7 @@
  *  1. 寫入 Google 試算表
  *  2. 把入園副本寄到飼主信箱（含 PDF）
  *  3. 把 PDF、簽名圖存進商家 Google 雲端資料夾
- *  4. 發送／核對驗證碼（先寄到電子信箱；簡訊可之後再接）
+ *  4. 發送／核對驗證碼（寄到飼主電子信箱）
  *
  * 部署步驟（一次即可）：
  *  1. 開啟 https://script.google.com → 新增專案 → 專案名稱「NicoPark 入園登記」
@@ -75,49 +75,51 @@ function doPost(e) {
 
 function sendOtp_(payload) {
   verifyTurnstile_(payload.turnstileToken);
-  var phone = String(payload.phone || "").replace(/\D/g, "");
-  if (!/^09\d{8}$/.test(phone)) {
-    throw new Error("手機號碼格式不正確。");
+  var email = emailKey_(payload.email);
+  if (!isEmail_(email)) {
+    throw new Error("電子信箱格式不正確。");
+  }
+  if (payload.purpose === "lookup" && !findEmailRow_(email)) {
+    throw new Error("找不到此電子信箱的入園紀錄，請確認信箱或先完成登記。");
   }
   var cache = CacheService.getScriptCache();
-  if (cache.get("otp_sent_" + phone)) {
+  if (cache.get("otp_sent_" + email)) {
     throw new Error("請稍候再重新發送驗證碼。");
-  }
-  var email = String(payload.email || "").trim();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    email = findEmailByPhone_(phone);
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new Error(payload.purpose === "lookup"
-      ? "找不到此手機的入園紀錄，請確認號碼或先完成登記。"
-      : "找不到電子信箱，請返回第一步確認。");
   }
   var code = "";
   for (var i = 0; i < 6; i++) code += String(Math.floor(Math.random() * 10));
-  cache.put("otp_" + phone, JSON.stringify({
+  cache.put("otp_" + email, JSON.stringify({
     code: code,
     email: email,
     exp: Date.now() + CONFIG.OTP_TTL_SEC * 1000,
     tries: 0
   }), CONFIG.OTP_TTL_SEC);
-  cache.put("otp_sent_" + phone, "1", 90);
+  cache.put("otp_sent_" + email, "1", 90);
   if (hourCount_("otp") >= 25) {
     throw new Error("目前驗證信件發送次數已達上限，請一小時後再試。");
   }
 
   sendMailSafe_({
     to: email,
-    subject: "NicoPark 入園驗證碼",
+    subject: "NicoPark 電子郵件驗證碼",
     name: "Nico Nico Pet House",
     body:
       "您好，\n\n" +
-      "您的入園驗證碼：" + code + "\n" +
+      "您的入園電子郵件驗證碼：" + code + "\n" +
       "請於 10 分鐘內輸入。若不是您本人操作，請忽略此信。\n\n" +
       "Nico Nico Pet House 尼口尼口寵物精緻美容旅館\n"
   });
   bumpHour_("otp");
 
   return { success: true, channel: "email", emailMasked: maskEmail_(email) };
+}
+
+function emailKey_(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function isEmail_(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ""));
 }
 
 function maskEmail_(email) {
@@ -150,7 +152,9 @@ function submit_(payload) {
   if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
   if (String(owner.emergencyName || "").trim().length < 2) throw new Error("請填寫緊急聯絡人。");
   if (!/^\d{10}$/.test(String(owner.emergencyPhone || "").replace(/\D/g, ""))) throw new Error("請填寫 10 碼緊急聯絡人電話。");
-  verifyOtp_(phone, String(payload.otp || ""));
+  var email = emailKey_(owner.email);
+  if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
+  verifyOtp_(email, String(payload.otp || ""));
 
   if (!payload.agreedToTerms) throw new Error("請先同意條款並完成簽署。");
   if (!payload.agreedToPhoto) throw new Error("請先同意毛孩影像拍攝與使用。");
@@ -201,7 +205,7 @@ function submit_(payload) {
     mailed = false;
   }
 
-  consumeOtp_(phone);
+  consumeOtp_(email);
 
   return {
     success: true,
@@ -215,17 +219,16 @@ function submit_(payload) {
 
 function lookup_(payload) {
   verifyTurnstile_(payload.turnstileToken);
-  var phone = String(payload.phone || "").replace(/\D/g, "");
-  if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
-  verifyOtp_(phone, String(payload.otp || ""));
+  var email = emailKey_(payload.email);
+  if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
+  verifyOtp_(email, String(payload.otp || ""));
   var sh = getSheet_();
   var values = sh.getDataRange().getDisplayValues();
   var map = {};
   var order = [];
   for (var r = values.length - 1; r >= 1; r--) {
     var row = values[r];
-    var p = String(row[3] || "").replace(/\D/g, "");
-    if (p !== phone) continue;
+    if (emailKey_(row[4]) !== email) continue;
     var id = String(row[0] || "");
     if (!id) continue;
     if (!map[id]) {
@@ -241,46 +244,48 @@ function lookup_(payload) {
     if (!map[id].pdfUrl && row[28]) map[id].pdfUrl = row[28];
     if (order.length >= 30) break;
   }
-  consumeOtp_(phone);
+  consumeOtp_(email);
   return {
     success: true,
     cases: order.map(function (id) { return map[id]; })
   };
 }
 
-function findEmailByPhone_(phone) {
+function findEmailRow_(email) {
+  email = emailKey_(email);
   try {
     var sh = getSheet_();
     var values = sh.getDataRange().getDisplayValues();
     for (var r = values.length - 1; r >= 1; r--) {
-      var p = String(values[r][3] || "").replace(/\D/g, "");
-      if (p === phone && values[r][4]) return String(values[r][4]).trim();
+      if (emailKey_(values[r][4]) === email) return true;
     }
   } catch (err) {}
-  return "";
+  return false;
 }
 
-function verifyOtp_(phone, otp) {
-  var rec = readOtp_(phone);
+function verifyOtp_(email, otp) {
+  email = emailKey_(email);
+  var rec = readOtp_(email);
   rec.tries = (rec.tries || 0) + 1;
   if (rec.tries > CONFIG.OTP_MAX_TRIES) {
-    consumeOtp_(phone);
+    consumeOtp_(email);
     throw new Error("驗證碼錯誤次數過多，請重新發送。");
   }
   if (String(rec.code) !== String(otp)) {
-    CacheService.getScriptCache().put("otp_" + phone, JSON.stringify(rec), CONFIG.OTP_TTL_SEC);
+    CacheService.getScriptCache().put("otp_" + email, JSON.stringify(rec), CONFIG.OTP_TTL_SEC);
     throw new Error("驗證碼不正確，請再試一次。");
   }
 }
 
-function readOtp_(phone) {
-  var raw = CacheService.getScriptCache().get("otp_" + phone);
+function readOtp_(email) {
+  email = emailKey_(email);
+  var raw = CacheService.getScriptCache().get("otp_" + email);
   if (!raw) throw new Error("驗證碼已過期或尚未發送，請重新取得驗證碼。");
   return JSON.parse(raw);
 }
 
-function consumeOtp_(phone) {
-  CacheService.getScriptCache().remove("otp_" + phone);
+function consumeOtp_(email) {
+  CacheService.getScriptCache().remove("otp_" + emailKey_(email));
 }
 
 function getRootFolder_() {
