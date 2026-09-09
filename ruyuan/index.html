@@ -1347,6 +1347,12 @@
               <p class="error" data-err="ownerEmail"></p>
             </div>
             <div class="field">
+              <label for="ownerLine">LINE 名稱 <span class="req">必填</span></label>
+              <input id="ownerLine" name="ownerLine" type="text" maxlength="40" autocomplete="nickname" placeholder="請填顯示名稱" />
+              <span class="hint">這是 LINE 上別人看到的名稱，不是 ID</span>
+              <p class="error" data-err="ownerLine"></p>
+            </div>
+            <div class="field">
               <label for="ownerAddress">家長地址或社區名稱及樓號 <span class="req">必填</span></label>
               <input id="ownerAddress" name="ownerAddress" type="text" maxlength="80" autocomplete="street-address" placeholder="例如：XX社區 8樓" />
               <p class="error" data-err="ownerAddress"></p>
@@ -1494,6 +1500,7 @@
             <div><dt>毛寶</dt><dd id="sum-pet">—</dd></div>
             <div><dt>聯絡電話</dt><dd id="sum-phone">—</dd></div>
             <div><dt>驗證信箱</dt><dd id="sum-email">—</dd></div>
+            <div><dt>LINE 名稱</dt><dd id="sum-line">—</dd></div>
             <div><dt>緊急聯絡</dt><dd id="sum-emergency">—</dd></div>
           </div>
           <div class="stack" style="margin-top:16px">
@@ -1994,6 +2001,7 @@
           phone: phone || val("ownerPhone"),
           phoneE164: toE164(phone),
           email: val("ownerEmail"),
+          lineName: val("ownerLine"),
           address: val("ownerAddress"),
           emergencyName: val("emergencyName"),
           emergencyPhone: digitsOnly(val("emergencyPhone")).slice(0, 10)
@@ -2022,6 +2030,7 @@
           fill("ownerName", o.name);
           fill("ownerPhone", o.phone);
           fill("ownerEmail", o.email);
+          fill("ownerLine", o.lineName);
           fill("ownerAddress", o.address);
           fill("emergencyName", o.emergencyName);
           fill("emergencyPhone", o.emergencyPhone);
@@ -2122,6 +2131,7 @@
         const typo = emailTypoMsg(mail);
         if (typo) add("ownerEmail", false, typo);
       }
+      add("ownerLine", val("ownerLine").trim().length >= 1, "請填寫 LINE 名稱（不是 ID）");
       add("ownerAddress", val("ownerAddress").trim().length >= 2, "請填寫家長地址或社區名稱及樓號");
       add("emergencyName", val("emergencyName").trim().length >= 2, "請填寫緊急聯絡人");
       add("emergencyPhone", /^\d{10}$/.test(digitsOnly(val("emergencyPhone"))), "請填寫 10 碼緊急聯絡人電話");
@@ -2353,6 +2363,7 @@
       $("#sum-pet").textContent = names || "—";
       $("#sum-phone").textContent = phone ? prettyPhone(phone) : val("ownerPhone") || "—";
       $("#sum-email").textContent = val("ownerEmail") || "—";
+      $("#sum-line").textContent = val("ownerLine") || "—";
       const em = val("emergencyName");
       const ep = digitsOnly(val("emergencyPhone"));
       $("#sum-emergency").textContent = [em, ep].filter(Boolean).join("　") || "—";
