@@ -1346,6 +1346,16 @@
               <input id="ownerAddress" name="ownerAddress" type="text" maxlength="80" autocomplete="street-address" placeholder="例如：XX社區 8樓" />
               <p class="error" data-err="ownerAddress"></p>
             </div>
+            <div class="field">
+              <label for="emergencyName">緊急聯絡人 <span class="req">必填</span></label>
+              <input id="emergencyName" name="emergencyName" type="text" maxlength="50" autocomplete="name" />
+              <p class="error" data-err="emergencyName"></p>
+            </div>
+            <div class="field">
+              <label for="emergencyPhone">緊急聯絡人電話 <span class="req">必填</span></label>
+              <input id="emergencyPhone" name="emergencyPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="0912345678" />
+              <p class="error" data-err="emergencyPhone"></p>
+            </div>
 
           </div>
         </article>
@@ -1479,6 +1489,7 @@
             <div><dt>毛寶</dt><dd id="sum-pet">—</dd></div>
             <div><dt>聯絡電話</dt><dd id="sum-phone">—</dd></div>
             <div><dt>驗證信箱</dt><dd id="sum-email">—</dd></div>
+            <div><dt>緊急聯絡</dt><dd id="sum-emergency">—</dd></div>
           </div>
           <div class="stack" style="margin-top:16px">
             <div class="field">
@@ -1977,7 +1988,9 @@
           phone: phone || val("ownerPhone"),
           phoneE164: toE164(phone),
           email: val("ownerEmail"),
-          address: val("ownerAddress")
+          address: val("ownerAddress"),
+          emergencyName: val("emergencyName"),
+          emergencyPhone: digitsOnly(val("emergencyPhone")).slice(0, 10)
         },
         pets: pets,
         pet: first,
@@ -2004,6 +2017,8 @@
           fill("ownerPhone", o.phone);
           fill("ownerEmail", o.email);
           fill("ownerAddress", o.address);
+          fill("emergencyName", o.emergencyName);
+          fill("emergencyPhone", o.emergencyPhone);
           
           if (Array.isArray(data.pets) && data.pets.length) pets = data.pets.slice(0, 1);
           else if (data.pet) pets = [{ ...data.pet, ...(data.care || {}) }];
@@ -2096,6 +2111,8 @@
         if (typo) add("ownerEmail", false, typo);
       }
       add("ownerAddress", val("ownerAddress").trim().length >= 2, "請填寫家長地址或社區名稱及樓號");
+      add("emergencyName", val("emergencyName").trim().length >= 2, "請填寫緊急聯絡人");
+      add("emergencyPhone", /^\d{10}$/.test(digitsOnly(val("emergencyPhone"))), "請填寫 10 碼緊急聯絡人電話");
       petCards().forEach((card) => {
         petIssueList(card).forEach((row) => list.push(row));
       });
@@ -2324,6 +2341,9 @@
       $("#sum-pet").textContent = names || "—";
       $("#sum-phone").textContent = phone ? prettyPhone(phone) : val("ownerPhone") || "—";
       $("#sum-email").textContent = val("ownerEmail") || "—";
+      const em = val("emergencyName");
+      const ep = digitsOnly(val("emergencyPhone"));
+      $("#sum-emergency").textContent = [em, ep].filter(Boolean).join("　") || "—";
     }
 
     function initPad() {
@@ -2676,6 +2696,10 @@
       if (validateStep1()) { saveDraft(); showPanel(2); }
     });
     document.getElementById("ownerPhone").addEventListener("input", (e) => {
+      const next = digitsOnly(e.target.value).slice(0, 10);
+      if (e.target.value !== next) e.target.value = next;
+    });
+    document.getElementById("emergencyPhone").addEventListener("input", (e) => {
       const next = digitsOnly(e.target.value).slice(0, 10);
       if (e.target.value !== next) e.target.value = next;
     });

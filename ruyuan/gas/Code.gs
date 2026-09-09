@@ -45,7 +45,7 @@ var CONFIG = {
 
 var SHEET_HEADERS = [
   "案件識別碼", "送出時間", "飼主名稱", "聯絡電話", "電子信箱", "地址",
-  "毛孩名字", "性別", "品種", "年齡", "體重kg", "節育", "晶片號碼", "定期投藥",
+  "緊急聯絡人", "緊急聯絡人電話", "毛孩名字", "性別", "品種", "年齡", "體重kg", "節育", "晶片號碼", "定期投藥",
   "病史", "最近食慾", "最近排便", "散步", "館內點心",
   "已同意條款", "簽署時間", "雲端資料夾", "PDF連結", "簽名檔"
 ];
@@ -113,6 +113,8 @@ function submit_(payload) {
   var phone = String(owner.phone || "").replace(/\D/g, "");
   if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
   if (String(owner.address || "").trim().length < 2) throw new Error("請填寫家長地址或社區名稱及樓號。");
+  if (String(owner.emergencyName || "").trim().length < 2) throw new Error("請填寫緊急聯絡人。");
+  if (!/^\d{10}$/.test(String(owner.emergencyPhone || "").replace(/\D/g, ""))) throw new Error("請填寫 10 碼緊急聯絡人電話。");
   var email = emailKey_(owner.email);
   if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
   verifyOtp_(email, String(payload.otp || ""));
@@ -173,7 +175,7 @@ function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl,
   if (care.snackAllergy) snack += (snack ? "；" : "") + care.snackAllergy;
   getSheet_().appendRow([
     caseId, tzNow, owner.name || "", owner.phone || "", owner.email || "", owner.address || "",
-    pet.name || "", pet.gender || "", pet.breed || "", pet.age || "", pet.weightKg || "",
+    owner.emergencyName || "", owner.emergencyPhone || "", pet.name || "", pet.gender || "", pet.breed || "", pet.age || "", pet.weightKg || "",
     pet.neutered || care.neutered || "", pet.chip || care.chip || "", care.preventative || "",
     diseases, care.appetite || "", care.stool || "", walk, snack,
     payload.agreedToTerms && payload.agreedToPhoto ? "電子簽章、毛孩影像" : (payload.agreedToTerms ? "電子簽章" : "否"),
@@ -202,7 +204,8 @@ function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) 
   meta.setBorderColor(FORM.line);
   kvTable_(body, [
     ["毛孩家長", owner.name, "聯繫電話", owner.phone],
-    ["電子信箱", owner.email, "地址", owner.address]
+    ["電子信箱", owner.email, "地址", owner.address],
+    ["緊急聯絡人", owner.emergencyName, "緊急聯繫電話", owner.emergencyPhone]
   ]);
   bar_(body, "毛孩　" + (pet.name || ""));
   kvTable_(body, [
