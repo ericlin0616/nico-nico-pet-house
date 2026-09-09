@@ -952,8 +952,6 @@ function submitCheckin_(payload) {
   var phone = String(owner.phone || "").replace(/\D/g, "");
   if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
   if (String(owner.address || "").trim().length < 2) throw new Error("請填寫家長地址或社區名稱及樓號。");
-  if (String(owner.emergencyName || "").trim().length < 2) throw new Error("請填寫緊急聯絡人。");
-  if (!/^\d{10}$/.test(String(owner.emergencyPhone || "").replace(/\D/g, ""))) throw new Error("請填寫 10 碼緊急聯絡人電話。");
   var email = emailKey_(owner.email);
   if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
   verifyOtp_(email, String(payload.otp || ""));
@@ -963,12 +961,6 @@ function submitCheckin_(payload) {
 
   var pet = list[0].pet || {};
   var care = list[0].care || pet;
-  if (care.hasVet === "是") {
-    if (String(care.vetName || "").trim().length < 2) throw new Error("請填寫指定醫院名稱。");
-    if (!/^04\d{8}$/.test(String(care.vetPhone || "").replace(/\D/g, ""))) {
-      throw new Error("指定醫院電話請填 04 開頭 10 碼。");
-    }
-  }
 
   var caseId = makeCaseId_("IC");
   var now = new Date();
@@ -1068,8 +1060,7 @@ function createCheckinPdf_(folder, caseId, tzNow, owner, pet, care, payload, sig
   meta.setBorderColor(FORM.line);
   kvTable_(body, [
     ["毛孩家長", owner.name, "聯繫電話", owner.phone],
-    ["電子信箱", owner.email, "地址", owner.address],
-    ["緊急聯絡人", owner.emergencyName, "緊急聯繫電話", owner.emergencyPhone]
+    ["電子信箱", owner.email, "地址", owner.address]
   ]);
   bar_(body, "毛孩　" + (pet.name || ""));
   kvTable_(body, [
@@ -1078,8 +1069,7 @@ function createCheckinPdf_(folder, caseId, tzNow, owner, pet, care, payload, sig
     ["性別", checksLine_(["男", "女"], pet.gender), "節育", checksLine_(["已節育", "未節育"], pet.neutered || care.neutered)],
     ["晶片號碼", pet.chip || care.chip || "未填", "定期投藥", checksLine_(["是", "否"], care.preventative)],
     ["最近食慾", checksLine_(["馬上吃完", "看心情吃", "不吃"], care.appetite), "最近排便", checksLine_(["正常", "軟便", "拉稀"], care.stool)],
-    ["散步", checksLine_(["暴衝", "不走草", "不散步", "備註"], care.walk) + extra_(care.walkNote), "館內點心", checksLine_(["是", "否", "食物過敏"], care.snack) + extra_(care.snackAllergy)],
-    ["緊急送醫", care.hasVet === "是" ? "指定醫院" : (care.hasVet === "否" ? "由店家送至獸醫診療場所" : ""), "指定醫院", care.hasVet === "是" ? vetLine_(care) : "無指定"]
+    ["散步", checksLine_(["暴衝", "不走草", "不散步", "備註"], care.walk) + extra_(care.walkNote), "館內點心", checksLine_(["是", "否", "食物過敏"], care.snack) + extra_(care.snackAllergy)]
   ]);
   checkBlock_(body, "病史", ["癲癇", "心臟病", "其他", "無"], care.diseases, care.diseaseOther);
   bar_(body, "飼主簽名");

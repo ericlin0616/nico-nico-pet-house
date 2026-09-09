@@ -1382,16 +1382,7 @@
               <input id="ownerAddress" name="ownerAddress" type="text" maxlength="80" autocomplete="street-address" placeholder="例如：XX社區 8樓" />
               <p class="error" data-err="ownerAddress"></p>
             </div>
-            <div class="field">
-              <label for="emergencyName">緊急聯絡人 <span class="req">必填</span></label>
-              <input id="emergencyName" name="emergencyName" type="text" maxlength="50" autocomplete="name" />
-              <p class="error" data-err="emergencyName"></p>
-            </div>
-            <div class="field">
-              <label for="emergencyPhone">緊急聯絡人電話 <span class="req">必填</span></label>
-              <input id="emergencyPhone" name="emergencyPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="0912345678" />
-              <p class="error" data-err="emergencyPhone"></p>
-            </div>
+
           </div>
         </article>
 
@@ -1728,22 +1719,7 @@
             </div>
             <p class="error" data-err="p__IDX___snack"></p>
           </fieldset>
-          <fieldset class="field">
-            <legend>緊急就醫時指定獸醫診療場所 <span class="req">必填</span></legend>
-            <div class="chips">
-              <label class="choice"><input type="radio" name="p__IDX___hasVet" data-k="hasVet" value="是" data-reveal="p__IDX___vetWrap" /> 指定下列醫院</label>
-              <label class="choice"><input type="radio" name="p__IDX___hasVet" data-k="hasVet" value="否" /> 無指定，由店家送至獸醫診療場所</label>
-            </div>
-            <p class="error" data-err="p__IDX___hasVet"></p>
-            <div class="reveal" id="p__IDX___vetWrap" hidden>
-              <label for="p__IDX___vetName">醫院名稱 <span class="req">必填</span></label>
-              <input id="p__IDX___vetName" data-k="vetName" type="text" maxlength="40" placeholder="例如：北屯動物醫院" />
-              <p class="error" data-err="p__IDX___vetName"></p>
-              <label for="p__IDX___vetPhone" style="margin-top:12px">醫院電話 <span class="req">必填</span></label>
-              <input id="p__IDX___vetPhone" data-k="vetPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="0423456789" />
-              <p class="error" data-err="p__IDX___vetPhone"></p>
-            </div>
-          </fieldset>
+          
         </div>
       </article>
     </template>
@@ -2031,9 +2007,6 @@
       cardSet(card, "walkNote", care.walkNote || d.walkNote || "");
       cardSet(card, "snack", care.snack || d.snack);
       cardSet(card, "snackAllergy", care.snackAllergy || d.snackAllergy || "");
-      cardSet(card, "hasVet", care.hasVet || d.hasVet);
-      cardSet(card, "vetName", care.vetName || d.vetName || "");
-      cardSet(card, "vetPhone", String(care.vetPhone || d.vetPhone || "").replace(/\D/g, "").slice(0, 10));
       ["diseases"].forEach((g) => {
         const sample = card.querySelector("input[data-k=\"" + g + "\"]");
         if (!sample) return;
@@ -2058,11 +2031,7 @@
         walk: cardRadio(card, "walk"),
         walkNote: cardVal(card, "walkNote"),
         snack: cardRadio(card, "snack"),
-        snackAllergy: cardVal(card, "snackAllergy"),
-        hasVet: cardRadio(card, "hasVet"),
-        vetName: cardVal(card, "vetName"),
-        vetPhone: digitsOnly(cardVal(card, "vetPhone")).slice(0, 10),
-        vetInfo: [cardVal(card, "vetName"), digitsOnly(cardVal(card, "vetPhone"))].filter(Boolean).join("／")
+        snackAllergy: cardVal(card, "snackAllergy")
       };
     }
 
@@ -2076,9 +2045,7 @@
           phone: phone || val("ownerPhone"),
           phoneE164: toE164(phone),
           email: val("ownerEmail"),
-          address: val("ownerAddress"),
-          emergencyName: val("emergencyName"),
-          emergencyPhone: val("emergencyPhone")
+          address: val("ownerAddress")
         },
         pets: pets,
         pet: first,
@@ -2105,8 +2072,7 @@
           fill("ownerPhone", o.phone);
           fill("ownerEmail", o.email);
           fill("ownerAddress", o.address);
-          fill("emergencyName", o.emergencyName);
-          fill("emergencyPhone", o.emergencyPhone);
+          
           if (Array.isArray(data.pets) && data.pets.length) pets = data.pets.slice(0, 1);
           else if (data.pet) pets = [{ ...data.pet, ...(data.care || {}) }];
         }
@@ -2180,11 +2146,7 @@
       if (cardRadio(card, "snack") === "食物過敏" && !cardVal(card, "snackAllergy")) {
         push(item("snackAllergy", false, "請填寫過敏食物"));
       }
-      push(item("hasVet", !!cardRadio(card, "hasVet"), "請選擇緊急就醫指定醫院"));
-      if (cardRadio(card, "hasVet") === "是") {
-        push(item("vetName", cardVal(card, "vetName").trim().length >= 2, "請填寫醫院名稱"));
-        push(item("vetPhone", /^04\d{8}$/.test(digitsOnly(cardVal(card, "vetPhone"))), "請填寫 04 開頭的 10 碼醫院電話"));
-      }
+
       return list;
     }
 
@@ -2202,8 +2164,6 @@
         if (typo) add("ownerEmail", false, typo);
       }
       add("ownerAddress", val("ownerAddress").trim().length >= 2, "請填寫家長地址或社區名稱及樓號");
-      add("emergencyName", val("emergencyName").trim().length >= 2, "請填寫緊急聯絡人");
-      add("emergencyPhone", /^\d{10}$/.test(digitsOnly(val("emergencyPhone"))), "請填寫 10 碼緊急聯絡人電話");
       petCards().forEach((card) => {
         petIssueList(card).forEach((row) => list.push(row));
       });
@@ -2962,8 +2922,8 @@
     document.getElementById("step-1").addEventListener("input", (e) => {
       const t = e.target;
       if (!t) return;
-      if (t.id === "emergencyPhone" || (t.getAttribute && t.getAttribute("data-k") === "vetPhone")) {
-        const next = digitsOnly(t.value).slice(0, 10);
+      if (t.getAttribute && t.getAttribute("data-k") === "chip") {
+        const next = digitsOnly(t.value).slice(0, 20);
         if (t.value !== next) t.value = next;
       }
     });
