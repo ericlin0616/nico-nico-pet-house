@@ -221,6 +221,7 @@ function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) 
     ["品種", pet.breed, "年齡", pet.age],
     ["體重", pet.weightKg ? pet.weightKg + " kg" : "", "性別", checksLine_(["男", "女"], pet.gender)],
     ["節育", checksLine_(["已節育", "未節育"], pet.neutered || care.neutered), "晶片號碼", pet.chip || care.chip || "未填"],
+    ["定期投藥", checksLine_(["是", "否"], care.preventative), "", ""],
     ["最近食慾", checksLine_(["馬上吃完", "看心情吃", "不吃"], care.appetite), "最近排便", checksLine_(["正常", "軟便", "拉稀"], care.stool)],
     ["散步", checksLine_(["暴衝", "不走草", "不散步", "備註"], care.walk) + extra_(care.walkNote), "館內點心", checksLine_(["是", "否", "食物過敏"], care.snack) + extra_(care.snackAllergy)]
   ]);
