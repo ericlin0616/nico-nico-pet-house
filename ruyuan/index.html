@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no" />
-  <meta name="theme-color" content="#AC9D8D" />
+  <meta name="theme-color" content="#9AA58E" />
   <meta name="description" content="Nico Nico Pet House 尼口尼口寵物精緻美容旅館｜尼口尼口寵物精緻美容旅館｜寵物入館資料與電子簽署" />
   <meta property="og:title" content="入館資料表｜Nico Nico Pet House" />
   <meta property="og:description" content="尼口尼口寵物精緻美容旅館｜寵物入館資料、定型化契約與電子簽署" />
@@ -14,20 +14,20 @@
   <script src="lib/signature_pad.umd.min.js"></script>
   <style>
     :root {
-      --oat: #AC9D8D;
-      --oat-soft: #DDD0C3;
-      --milk: #E7D9CC;
-      --warm: #F8F3EC;
-      --paper: #FFFcf8;
-      --page: #E8D5C0;
-      --cocoa: #53453A;
-      --cocoa-deep: #3F332B;
-      --ink: #4A3C32;
-      --muted: #7A6B5E;
+      --oat: #9AA58E;
+      --oat-soft: #D4D9CC;
+      --milk: #E4E7DC;
+      --warm: #F6F5F0;
+      --paper: #FBFAF6;
+      --page: #E6E8DF;
+      --cocoa: #4A4D42;
+      --cocoa-deep: #373A32;
+      --ink: #3F4239;
+      --muted: #6F7468;
       --line: color-mix(in srgb, var(--cocoa) 14%, transparent);
       --ok: #5E6B52;
       --danger: #9A5848;
-      --sign-bg: #fffaf5;
+      --sign-bg: #f7f6f1;
       --radius-xs: 6px;
       --radius-sm: 10px;
       --radius-md: 14px;
@@ -49,13 +49,13 @@
       --text-xl: clamp(1.25rem, 1.05rem + 0.8vw, 1.6rem);
       --leading: 1.55;
       --shadow-border:
-        0 0 0 1px rgba(83, 69, 58, 0.07),
-        0 1px 2px -1px rgba(83, 69, 58, 0.06),
-        0 8px 24px -12px rgba(83, 69, 58, 0.12);
+        0 0 0 1px rgba(74, 77, 66, 0.07),
+        0 1px 2px -1px rgba(74, 77, 66, 0.06),
+        0 8px 24px -12px rgba(74, 77, 66, 0.12);
       --shadow-border-hover:
-        0 0 0 1px rgba(83, 69, 58, 0.12),
-        0 1px 2px -1px rgba(83, 69, 58, 0.08),
-        0 10px 28px -12px rgba(83, 69, 58, 0.16);
+        0 0 0 1px rgba(74, 77, 66, 0.12),
+        0 1px 2px -1px rgba(74, 77, 66, 0.08),
+        0 10px 28px -12px rgba(74, 77, 66, 0.16);
       --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
       --motion-quick: 150ms;
       --motion-fast: 250ms;
@@ -92,9 +92,9 @@
       pointer-events: none;
       z-index: 0;
       background:
-        radial-gradient(ellipse 90% 50% at 8% -8%, rgba(172, 157, 141, 0.28), transparent 55%),
-        radial-gradient(ellipse 70% 40% at 100% 0%, rgba(212, 184, 154, 0.35), transparent 50%),
-        linear-gradient(180deg, #F3E6D6 0%, #E4CDB6 100%);
+        radial-gradient(ellipse 90% 50% at 8% -8%, rgba(154, 165, 142, 0.28), transparent 55%),
+        radial-gradient(ellipse 70% 40% at 100% 0%, rgba(212, 217, 196, 0.45), transparent 50%),
+        linear-gradient(180deg, #F3F4EE 0%, #DDE1D4 100%);
     }
 
     .app {
@@ -139,8 +139,8 @@
       animation: numPulse 2.2s ease-in-out infinite;
     }
     @keyframes numPulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(83, 69, 58, 0.18); }
-      50% { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(83, 69, 58, 0); }
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(74, 77, 66, 0.18); }
+      50% { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(74, 77, 66, 0); }
     }
     .choice {
       transition: transform var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out), opacity var(--motion-fast) var(--ease-out);
@@ -172,7 +172,7 @@
       color: var(--cocoa);
       opacity: 0;
       animation: pawHop 1.7s var(--ease-out) forwards;
-      filter: drop-shadow(0 4px 8px rgba(83, 69, 58, 0.18));
+      filter: drop-shadow(0 4px 8px rgba(74, 77, 66, 0.18));
     }
     @keyframes pawHop {
       0% { opacity: 0; transform: translate(0, 10px) rotate(var(--rot, -12deg)) scale(0.4); }
@@ -244,7 +244,7 @@
       max-width: 280px;
       background: color-mix(in srgb, var(--paper) 78%, transparent);
       border-radius: 999px;
-      box-shadow: 0 0 0 1px rgba(83, 69, 58, 0.08);
+      box-shadow: 0 0 0 1px rgba(74, 77, 66, 0.08);
     }
     .site-nav button {
       appearance: none;
@@ -263,7 +263,7 @@
     }
     .site-nav button.is-on {
       background: var(--cocoa);
-      color: #F8F3EC;
+      color: var(--warm);
     }
     .site-nav[hidden] { display: none !important; }
 
@@ -284,7 +284,7 @@
       margin-top: 8px;
       border-radius: var(--radius-lg);
       background: color-mix(in srgb, var(--warm) 70%, transparent);
-      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(74, 77, 66, 0.08);
     }
     .fold > summary {
       list-style: none;
@@ -329,7 +329,7 @@
       background: var(--warm);
       border-radius: var(--radius-lg);
       padding: 14px 14px 12px;
-      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.07);
+      box-shadow: inset 0 0 0 1px rgba(74, 77, 66, 0.07);
     }
     .case-item strong {
       display: block;
@@ -520,7 +520,7 @@
       font: inherit;
       font-size: 16px;
       padding: 0 14px;
-      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(74, 77, 66, 0.08);
       appearance: none;
       -webkit-appearance: none;
     }
@@ -534,7 +534,7 @@
     input::placeholder, textarea::placeholder { color: #A8988A; }
     input:focus, textarea:focus, .otp-input:focus {
       outline: none;
-      box-shadow: inset 0 0 0 1.5px var(--cocoa), 0 0 0 3px rgba(172, 157, 141, 0.28);
+      box-shadow: inset 0 0 0 1.5px var(--cocoa), 0 0 0 3px rgba(154, 165, 142, 0.28);
       background: #fff;
     }
     input.is-invalid, textarea.is-invalid {
@@ -589,7 +589,7 @@
       min-height: 48px;
       border-radius: var(--radius-md);
       background: var(--warm);
-      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.07);
+      box-shadow: inset 0 0 0 1px rgba(74, 77, 66, 0.07);
       cursor: pointer;
       font-size: 0.9rem;
       line-height: 1.4;
@@ -607,14 +607,14 @@
       box-shadow: inset 0 0 0 1.5px var(--cocoa);
     }
     .choice:has(input:focus-visible) {
-      box-shadow: inset 0 0 0 1.5px var(--cocoa), 0 0 0 3px rgba(172, 157, 141, 0.28);
+      box-shadow: inset 0 0 0 1.5px var(--cocoa), 0 0 0 3px rgba(154, 165, 142, 0.28);
     }
     .choice.is-off,
     .choice:has(input:disabled) {
       opacity: 0.42;
       cursor: not-allowed;
       background: color-mix(in srgb, var(--page) 70%, var(--warm));
-      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.05);
+      box-shadow: inset 0 0 0 1px rgba(74, 77, 66, 0.05);
       color: var(--muted);
     }
     .choice.is-off input { pointer-events: none; }
@@ -644,7 +644,7 @@
       padding: 14px 14px 18px;
       border-radius: var(--radius-lg);
       background: var(--warm);
-      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.07);
+      box-shadow: inset 0 0 0 1px rgba(74, 77, 66, 0.07);
       font-size: 0.86rem;
       color: var(--ink);
       line-height: 1.7;
@@ -712,7 +712,7 @@
       border-radius: var(--radius-lg);
       overflow: hidden;
       background: var(--sign-bg);
-      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.1);
+      box-shadow: inset 0 0 0 1px rgba(74, 77, 66, 0.1);
       position: relative;
       touch-action: none;
     }
@@ -733,7 +733,7 @@
       padding: 8px;
       border-radius: 14px;
       background: var(--warm);
-      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(74, 77, 66, 0.08);
     }
     .sign-preview-wrap p {
       margin: 0 0 6px;
@@ -747,7 +747,7 @@
       height: auto;
       max-height: 110px;
       object-fit: contain;
-      background: #FFFAF5;
+      background: #F7F6F1;
       border-radius: 10px;
     }
 
@@ -801,7 +801,7 @@
       padding: 12px;
       border-radius: var(--radius-lg);
       background: var(--warm);
-      box-shadow: inset 0 0 0 1px rgba(83, 69, 58, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(74, 77, 66, 0.08);
     }
     .cf-box p {
       margin: 0 0 8px;
@@ -1013,7 +1013,7 @@
       place-items: end center;
       padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
       background:
-        radial-gradient(ellipse 80% 50% at 50% 110%, rgba(172, 157, 141, 0.28), transparent 55%),
+        radial-gradient(ellipse 80% 50% at 50% 110%, rgba(154, 165, 142, 0.28), transparent 55%),
         rgba(63, 51, 43, 0.32);
       -webkit-backdrop-filter: blur(18px) saturate(1.35);
       backdrop-filter: blur(18px) saturate(1.35);
@@ -1031,7 +1031,7 @@
       border: 1px solid rgba(255, 255, 255, 0.48);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.72),
-        inset 0 -1px 0 rgba(83, 69, 58, 0.06),
+        inset 0 -1px 0 rgba(74, 77, 66, 0.06),
         0 18px 50px -18px rgba(63, 51, 43, 0.42);
       display: flex;
       flex-direction: column;
@@ -1109,7 +1109,7 @@
       display: block;
       width: 100%;
       height: auto;
-      background: #F4EBE1;
+      background: #EEF0E8;
     }
     .welcome-dots {
       position: relative;
@@ -1125,7 +1125,7 @@
       padding: 0;
       border: 0;
       border-radius: 99px;
-      background: rgba(172, 157, 141, 0.45);
+      background: rgba(154, 165, 142, 0.45);
     }
     .welcome-dots button.is-on {
       width: 20px;
@@ -2464,7 +2464,7 @@
       out.width = w;
       out.height = h;
       const ctx = out.getContext("2d");
-      ctx.fillStyle = "#FFFAF5";
+      ctx.fillStyle = "#F7F6F1";
       ctx.fillRect(0, 0, w, h);
       ctx.drawImage(src, 0, 0, w, h);
       return out.toDataURL("image/png");
