@@ -234,39 +234,6 @@
     }
     .bone-rule svg { flex: none; }
 
-    .site-nav {
-      display: flex;
-      flex-direction: row;
-      gap: 6px;
-      justify-content: center;
-      margin: 10px auto 0;
-      padding: 3px;
-      max-width: 280px;
-      background: color-mix(in srgb, var(--paper) 78%, transparent);
-      border-radius: 999px;
-      box-shadow: 0 0 0 1px rgba(74, 77, 66, 0.08);
-    }
-    .site-nav button {
-      appearance: none;
-      border: 0;
-      flex: 1;
-      min-width: 0;
-      background: transparent;
-      color: var(--cocoa);
-      font: inherit;
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      padding: 7px 10px;
-      border-radius: 999px;
-      white-space: nowrap;
-    }
-    .site-nav button.is-on {
-      background: var(--cocoa);
-      color: var(--warm);
-    }
-    .site-nav[hidden] { display: none !important; }
-
     .pet-head {
       display: flex;
       align-items: flex-start;
@@ -810,7 +777,7 @@
       color: var(--muted);
     }
     .cf-box iframe, .cf-box .cf-turnstile { max-width: 100%; }
-    #step-1, #step-2, #step-3, #lookup-panel {
+    #step-1, #step-2, #step-3 {
       padding-bottom: calc(108px + env(safe-area-inset-bottom));
     }
     input, select, textarea, .choice, .agree {
@@ -1329,10 +1296,6 @@
           <path d="M4.2 1.2a2.4 2.4 0 0 0-2.4 2.4c0 .5.16.96.42 1.34A2.4 2.4 0 0 0 1.8 8.4a2.4 2.4 0 0 0 2.4 2.4c.7 0 1.32-.3 1.76-.77h10.08c.44.47 1.06.77 1.76.77a2.4 2.4 0 0 0 2.4-2.4 2.4 2.4 0 0 0-1.42-2.18c.26-.38.42-.84.42-1.34a2.4 2.4 0 0 0-2.4-2.4c-.7 0-1.32.3-1.76.77H7.96A2.38 2.38 0 0 0 6.2 1.2H4.2Z"/>
         </svg>
       </div>
-      <nav class="site-nav" aria-label="頁面切換">
-        <button type="button" id="nav-register" class="is-on">入館登記</button>
-        <button type="button" id="nav-lookup">查詢案件</button>
-      </nav>
     </header>
 
     <ol class="progress" aria-label="填寫進度">
@@ -1551,38 +1514,7 @@
             <button type="button" class="btn btn-ghost btn-copy" id="copy-case">複製</button>
           </div>
         </div>
-        <a class="pdf-link" id="pdf-link" hidden target="_blank" rel="noopener noreferrer">下載入園資料副本（PDF）</a>
-        <div class="pet-actions" style="margin-top:16px">
-          <button type="button" class="btn btn-ghost" id="success-lookup">查詢其他案件</button>
-        </div>
-      </article>
-    </section>
-
-    <section class="panel" id="lookup-panel" hidden>
-      <article class="card">
-        <span class="card-kicker">Lookup</span>
-        <h2 tabindex="-1">查詢入館案件</h2>
-        <p class="lede">請輸入當初登記的電子信箱。驗證碼會寄到此信箱，通過後即可查看案件編號與 PDF。</p>
-        <div id="banner-lookup"></div>
-        <div class="stack">
-          <div class="field">
-            <label for="lookupEmail">電子信箱 <span class="req">必填</span></label>
-            <input id="lookupEmail" type="email" inputmode="email" maxlength="120" autocomplete="email" />
-            <p class="error" data-err="lookupEmail"></p>
-          </div>
-          <div class="field">
-            <label for="lookupOtp">6 位數驗證碼 <span class="req">必填</span></label>
-            <input id="lookupOtp" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="••••••" />
-            <p class="error" data-err="lookupOtp"></p>
-          </div>
-          <div class="cf-box" id="cf-lookup-wrap" hidden>
-            <p>人機驗證（防止驗證信被濫用）</p>
-            <div id="cf-lookup"></div>
-          </div>
-          <button type="button" class="btn btn-ghost" id="send-lookup-otp">發送驗證碼</button>
-          <button type="button" class="btn btn-primary" id="do-lookup">查詢案件</button>
-        </div>
-        <div class="case-list" id="lookup-results" hidden></div>
+        <a class="pdf-link" id="pdf-link" hidden target="_blank" rel="noopener noreferrer">下載入館資料副本（PDF）</a>
       </article>
     </section>
 
@@ -1759,16 +1691,11 @@
     }
 
     let current = 1;
-    let mode = "register";
     let pad = null;
     let otpLeft = 0;
     let otpTimer = null;
-    let lookupLeft = 0;
-    let lookupTimer = null;
     let sending = false;
-    let sendingLookup = false;
     let submitting = false;
-    let looking = false;
     let maxReached = 1;
     let petSeq = 0;
     let ownerNameComposing = false;
@@ -2356,30 +2283,16 @@
       });
     }
 
-    function syncSiteNav() {
-      const nav = document.querySelector(".site-nav");
-      if (!nav) return;
-      const hide = mode === "register" && (current === 2 || current === 3 || current === "success");
-      nav.hidden = hide;
-    }
-
     function showPanel(step) {
-      mode = "register";
-      document.getElementById("nav-register").classList.add("is-on");
-      document.getElementById("nav-lookup").classList.remove("is-on");
-      document.getElementById("lookup-panel").hidden = true;
-      document.querySelector(".progress").classList.remove("is-idle");
       current = step;
       if (typeof step === "number" && step > maxReached) maxReached = step;
       document.getElementById("park-form").hidden = false;
       document.getElementById("step-success").hidden = step === "success" ? false : true;
-      document.getElementById("lookup-panel").hidden = true;
       $$("[data-panel]").forEach((p) => {
         p.hidden = p.getAttribute("data-panel") !== String(step);
       });
       if (step === "success") document.getElementById("step-success").hidden = false;
       setProgress(step === "success" ? 3 : step);
-      syncSiteNav();
       const panel = document.querySelector("[data-panel=\"" + step + "\"]");
       const heading = panel && panel.querySelector("h2");
       goTop();
@@ -2497,7 +2410,6 @@
     }
 
     let cfRegId = null;
-    let cfLookupId = null;
 
     function turnstileEnabled() {
       return /^0[a-zA-Z0-9_-]{10,}/.test(String(TURNSTILE_SITE_KEY || "").trim())
@@ -2523,13 +2435,12 @@
 
     function loadTurnstile() {
       if (!turnstileEnabled()) return;
-      ["cf-register-wrap", "cf-lookup-wrap"].forEach((id) => {
+      ["cf-register-wrap"].forEach((id) => {
         const w = document.getElementById(id);
         if (w) w.hidden = false;
       });
       if (window.turnstile) {
         cfRegId = mountTurnstile("cf-register");
-        cfLookupId = mountTurnstile("cf-lookup");
         return;
       }
       if (document.getElementById("cf-turnstile-script")) return;
@@ -2540,7 +2451,6 @@
       s.defer = true;
       s.onload = function () {
         cfRegId = mountTurnstile("cf-register");
-        cfLookupId = mountTurnstile("cf-lookup");
       };
       document.head.appendChild(s);
     }
@@ -2620,165 +2530,22 @@
       };
     }
 
-    function setMode(next) {
-      const prev = mode;
-      mode = next;
-      document.getElementById("nav-register").classList.toggle("is-on", next === "register");
-      document.getElementById("nav-lookup").classList.toggle("is-on", next === "lookup");
-      const form = document.getElementById("park-form");
-      const success = document.getElementById("step-success");
-      const lookup = document.getElementById("lookup-panel");
-      const progress = document.querySelector(".progress");
-      if (next === "lookup") {
-        form.hidden = true;
-        success.hidden = true;
-        lookup.hidden = false;
-        progress.classList.add("is-idle");
-        goTop();
-        const h = lookup.querySelector("h2");
-        if (h) try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); }
-        announce("查詢案件");
-        syncSiteNav();
-        return;
-      }
-      lookup.hidden = true;
-      progress.classList.remove("is-idle");
-      if (prev === "lookup") {
-        if (current === "success") {
-          form.hidden = true;
-          success.hidden = false;
-        } else {
-          showPanel(typeof current === "number" ? current : 1);
-        }
-      }
-      syncSiteNav();
-    }
-
-    async function sendLookupOtp() {
-      clearErrors("lookup-panel");
-      showBanner("lookup", "");
-      const email = val("lookupEmail").trim();
-      if (!emailOk(email)) {
-        setErr("lookupEmail", "請填寫有效的電子信箱");
-        return;
-      }
-      if (sendingLookup || lookupLeft > 0) return;
-      sendingLookup = true;
-      const btn = document.getElementById("send-lookup-otp");
-      btn.disabled = true;
-      btn.textContent = "發送中…";
-      try {
-        const data = await callGas({
-          action: "sendOtp",
-          formType: "checkin",
-          email: email,
-          purpose: "lookup",
-          turnstileToken: readTurnstile(cfLookupId)
-        });
-        resetTurnstile(cfLookupId);
-        const masked = data.emailMasked || email;
-        showBanner("lookup", "驗證碼已寄到 " + masked + "。若沒看到請檢查垃圾信件或促銷分頁。", "ok");
-        startOtpCountdown(btn, "lookup");
-        document.getElementById("lookupOtp").focus();
-      } catch (err) {
-        btn.disabled = false;
-        btn.textContent = "發送驗證碼";
-        showBanner("lookup", err.message || "驗證碼發送失敗，請稍後再試。");
-      } finally {
-        sendingLookup = false;
-      }
-    }
-
-    async function doLookup() {
-      if (looking) return;
-      clearErrors("lookup-panel");
-      const email = val("lookupEmail").trim();
-      if (!emailOk(email)) {
-        setErr("lookupEmail", "請填寫有效的電子信箱");
-        return;
-      }
-      const otp = val("lookupOtp");
-      if (!/^\d{6}$/.test(otp)) {
-        setErr("lookupOtp", "請輸入 6 位數驗證碼");
-        return;
-      }
-      looking = true;
-      const btn = document.getElementById("do-lookup");
-      btn.disabled = true;
-      btn.textContent = "查詢中…";
-      try {
-        const data = await callGas({
-          action: "lookup",
-          formType: "checkin",
-          email: email,
-          otp: otp,
-          turnstileToken: readTurnstile(cfLookupId)
-        });
-        resetTurnstile(cfLookupId);
-        const cases = Array.isArray(data.cases) ? data.cases : (data.caseId ? [data] : []);
-        renderLookup(cases);
-        if (!cases.length) showBanner("lookup", "找不到此信箱的入園紀錄。", "ok");
-        else showBanner("lookup", "共 " + cases.length + " 筆案件。", "ok");
-      } catch (err) {
-        showBanner("lookup", err.message || "查詢失敗，請稍後再試。");
-      } finally {
-        looking = false;
-        btn.disabled = false;
-        btn.textContent = "查詢案件";
-      }
-    }
-
-    function renderLookup(cases) {
-      const host = document.getElementById("lookup-results");
-      host.innerHTML = "";
-      if (!cases.length) {
-        host.hidden = true;
-        return;
-      }
-      cases.forEach((c) => {
-        const item = document.createElement("article");
-        item.className = "case-item";
-        const names = Array.isArray(c.petNames) ? c.petNames.filter(Boolean).join("、") : (c.petName || "");
-        const id = c.caseId || c.case_id || "";
-        const when = c.submittedAt || c.time || "";
-        const pdf = c.pdfUrl || c.pdf_url || "";
-        item.innerHTML = "<strong></strong><p></p>";
-        item.querySelector("strong").textContent = id || "案件";
-        item.querySelector("p").textContent = [when, names].filter(Boolean).join(" ｜ ");
-        if (pdf && /^https?:\/\//i.test(pdf)) {
-          const a = document.createElement("a");
-          a.href = pdf;
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          a.textContent = "下載 PDF";
-          item.appendChild(a);
-        }
-        host.appendChild(item);
-      });
-      host.hidden = false;
-    }
-
-    function startOtpCountdown(btn, kind) {
-      const isLookup = kind === "lookup";
-      if (isLookup) lookupLeft = OTP_SEC;
-      else otpLeft = OTP_SEC;
+    function startOtpCountdown(btn) {
+      otpLeft = OTP_SEC;
       btn.disabled = true;
       const tick = () => {
-        const left = isLookup ? lookupLeft : otpLeft;
-        if (left <= 0) {
-          if (isLookup) { clearInterval(lookupTimer); lookupTimer = null; }
-          else { clearInterval(otpTimer); otpTimer = null; }
+        if (otpLeft <= 0) {
+          clearInterval(otpTimer);
+          otpTimer = null;
           btn.disabled = false;
           btn.textContent = "重新發送驗證碼";
           return;
         }
-        btn.textContent = "請稍候 " + left + " 秒";
-        if (isLookup) lookupLeft -= 1;
-        else otpLeft -= 1;
+        btn.textContent = "請稍候 " + otpLeft + " 秒";
+        otpLeft -= 1;
       };
       tick();
-      if (isLookup) lookupTimer = setInterval(tick, 1000);
-      else otpTimer = setInterval(tick, 1000);
+      otpTimer = setInterval(tick, 1000);
     }
 
     async function sendOtp() {
@@ -2803,7 +2570,7 @@
         resetTurnstile(cfRegId);
         const masked = data.emailMasked || email;
         showBanner(3, "驗證碼已寄到 " + masked + "。若沒看到請檢查垃圾信件或促銷分頁。", "ok");
-        startOtpCountdown(btn, "register");
+        startOtpCountdown(btn);
         document.getElementById("otp").focus();
       } catch (err) {
         btn.disabled = false;
@@ -2976,21 +2743,6 @@
     document.getElementById("otp").addEventListener("input", (e) => {
       e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
     });
-    const addPetBtn = document.getElementById("add-pet");
-    if (addPetBtn) addPetBtn.addEventListener("click", () => {
-      if (petCards().length >= MAX_PETS) return;
-      const card = addPet();
-      saveDraft();
-      if (card) card.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-    });
-    document.getElementById("nav-register").addEventListener("click", () => setMode("register"));
-    document.getElementById("nav-lookup").addEventListener("click", () => setMode("lookup"));
-    document.getElementById("success-lookup").addEventListener("click", () => setMode("lookup"));
-    document.getElementById("send-lookup-otp").addEventListener("click", sendLookupOtp);
-    document.getElementById("do-lookup").addEventListener("click", doLookup);
-    document.getElementById("lookupOtp").addEventListener("input", (e) => {
-      e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
-    });
 
     $$("[data-step-tab]").forEach((li) => {
       li.setAttribute("role", "button");
@@ -3035,7 +2787,6 @@
     syncReveals();
     loadTurnstile();
     showPanel(1);
-    if (/lookup/i.test(location.hash || "")) setMode("lookup");
 
     (function initWelcome() {
       const overlay = document.getElementById("welcome");

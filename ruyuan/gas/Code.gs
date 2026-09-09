@@ -20,7 +20,7 @@
  *  5. 複製 Web App 的 /exec 網址，貼回 ruyuan/index.html 的 GAS_WEB_APP_URL
  *
  * 前端契約：
- *  action：sendOtp / submit / lookup
+ *  action：sendOtp / submit
  *  POST：application/x-www-form-urlencoded
  *  欄位 payload = JSON 字串
  *
@@ -62,7 +62,6 @@ function doPost(e) {
     var action = String(payload.action || "");
     if (action === "sendOtp") return json_(sendOtp_(payload));
     if (action === "submit") return json_(submit_(payload));
-    if (action === "lookup") return json_(lookup_(payload));
     return json_({ success: false, message: "未知的操作，請重新整理頁面後再試。" });
   } catch (err) {
     return json_({ success: false, message: friendlyErr_(err) });
@@ -75,9 +74,6 @@ function sendOtp_(payload) {
   verifyTurnstile_(payload.turnstileToken);
   var email = emailKey_(payload.email);
   if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
-  if (payload.purpose === "lookup" && !findEmailRow_(email)) {
-    throw new Error("找不到此電子信箱的入館紀錄，請確認信箱或先完成登記。");
-  }
   var cache = CacheService.getScriptCache();
   if (cache.get("otp_sent_" + email)) {
     throw new Error("請稍候再重新發送驗證碼。");
@@ -156,33 +152,8 @@ function submit_(payload) {
     pdfUrl: pdfFile.getUrl(),
     message: mailed
       ? "入館資料已送出（" + (pet.name || "毛孩") + "）。副本已寄到 " + owner.email + "。"
-      : "入館資料已送出。案件與 PDF 已存檔；目前 Google 寄信受限，請用案件查詢或雲端連結取得副本。"
+      : "入館資料已送出。案件與 PDF 已存檔；目前 Google 寄信受限，請用信件中的雲端連結取得副本。"
   };
-}
-
-function lookup_(payload) {
-  verifyTurnstile_(payload.turnstileToken);
-  var email = emailKey_(payload.email);
-  if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
-  verifyOtp_(email, String(payload.otp || ""));
-  var values = getSheet_().getDataRange().getDisplayValues();
-  var map = {};
-  var order = [];
-  for (var r = values.length - 1; r >= 1; r--) {
-    var row = values[r];
-    if (emailKey_(row[4]) !== email) continue;
-    var id = String(row[0] || "");
-    if (!id) continue;
-    if (!map[id]) {
-      map[id] = { caseId: id, submittedAt: row[1] || "", petNames: [], pdfUrl: row[22] || "" };
-      order.push(id);
-    }
-    if (row[6]) map[id].petNames.push(String(row[6]));
-    if (!map[id].pdfUrl && row[22]) map[id].pdfUrl = row[22];
-    if (order.length >= 30) break;
-  }
-  consumeOtp_(email);
-  return { success: true, cases: order.map(function (id) { return map[id]; }) };
 }
 
 function petsOf_(form) {
@@ -311,17 +282,6 @@ function getSheet_() {
   return sh;
 }
 
-function findEmailRow_(email) {
-  email = emailKey_(email);
-  try {
-    var values = getSheet_().getDataRange().getDisplayValues();
-    for (var r = values.length - 1; r >= 1; r--) {
-      if (emailKey_(values[r][4]) === email) return true;
-    }
-  } catch (err) {}
-  return false;
-}
-
 function emailKey_(email) { return String(email || "").trim().toLowerCase(); }
 function isEmail_(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "")); }
 function maskEmail_(email) {
@@ -386,7 +346,7 @@ function sendCustomerMail_(owner, names, caseId, pdfFile) {
       "我們已收到毛孩 " + petLabel + " 的入館資料與電子簽署。\n" +
       "案件識別碼：" + caseId + "\n" +
       (pdfUrl ? ("完整表單 PDF：" + pdfUrl + "\n") : "") +
-      "也可到網站以電子郵件驗證碼查詢案件。\n\n" +
+      "\n" +
       CONFIG.BUSINESS_NAME + "\n"
   };
   if (CONFIG.ATTACH_PDF && pdfFile) {
