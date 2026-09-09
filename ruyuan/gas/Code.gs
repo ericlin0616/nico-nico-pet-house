@@ -1,0 +1,585 @@
+/**
+ * 寵物入館資料表｜Google Apps Script 後端（獨立專案）
+ *
+ * 這份只服務 /ruyuan 入館站，不要貼進「NicoPark 入園登記」那個專案。
+ *
+ * 會做的事：
+ *  1. 寫入獨立試算表「入館資料表」
+ *  2. 把入館副本寄到飼主信箱
+ *  3. 把 PDF、簽名圖存進獨立雲端資料夾「入館資料」
+ *  4. 發送／核對電子郵件驗證碼
+ *
+ * 部署步驟：
+ *  1. 開啟 https://script.google.com → 新增專案 → 名稱「入館資料表」
+ *  2. 刪掉預設程式碼，把本檔全部貼上並儲存
+ *  3. 右上角「部署」→「新增部署」→ 類型選「網頁應用程式」
+ *     - 說明：入館資料表
+ *     - 執行身分：我
+ *     - 具有存取權的使用者：任何人
+ *  4. 授權（請用店家 Google 帳號）
+ *  5. 複製 Web App 的 /exec 網址，貼回 ruyuan/index.html 的 GAS_WEB_APP_URL
+ *
+ * 前端契約：
+ *  action：sendOtp / submit / lookup
+ *  POST：application/x-www-form-urlencoded
+ *  欄位 payload = JSON 字串
+ *
+ * 每次更新後：「部署 → 管理部署 → 編輯（鉛筆）→ 版本選新版本 → 部署」
+ */
+
+var CONFIG = {
+  FOLDER_ID: "",
+  SHEET_ID: "",
+  SHEET_NAME: "入館資料表",
+  FOLDER_NAME: "入館資料",
+  SPREADSHEET_NAME: "入館資料表",
+  BUSINESS_NAME: "Nico Nico Pet House 尼口尼口寵物精緻美容旅館",
+  BUSINESS_EMAIL: "",
+  OTP_TTL_SEC: 600,
+  OTP_MAX_TRIES: 5,
+  SEND_MAIL: true,
+  ATTACH_PDF: false,
+  MAIL_HOUR_CAP: 40,
+  TURNSTILE_SECRET: ""
+};
+
+var SHEET_HEADERS = [
+  "案件識別碼", "送出時間", "飼主名稱", "聯絡電話", "電子信箱", "地址",
+  "毛孩名字", "性別", "品種", "年齡", "體重kg", "節育", "晶片號碼", "定期投藥",
+  "病史", "最近食慾", "最近排便", "散步", "館內點心",
+  "已同意條款", "簽署時間", "雲端資料夾", "PDF連結", "簽名檔"
+];
+
+function doGet() {
+  return json_({ ok: true, service: "Checkin", message: "入館資料表服務運作中" });
+}
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+    var payload = parsePayload_(e);
+    var action = String(payload.action || "");
+    if (action === "sendOtp") return json_(sendOtp_(payload));
+    if (action === "submit") return json_(submit_(payload));
+    if (action === "lookup") return json_(lookup_(payload));
+    return json_({ success: false, message: "未知的操作，請重新整理頁面後再試。" });
+  } catch (err) {
+    return json_({ success: false, message: friendlyErr_(err) });
+  } finally {
+    try { lock.releaseLock(); } catch (e2) {}
+  }
+}
+
+function sendOtp_(payload) {
+  verifyTurnstile_(payload.turnstileToken);
+  var email = emailKey_(payload.email);
+  if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
+  if (payload.purpose === "lookup" && !findEmailRow_(email)) {
+    throw new Error("找不到此電子信箱的入館紀錄，請確認信箱或先完成登記。");
+  }
+  var cache = CacheService.getScriptCache();
+  if (cache.get("otp_sent_" + email)) {
+    throw new Error("請稍候再重新發送驗證碼。");
+  }
+  var code = "";
+  for (var i = 0; i < 6; i++) code += String(Math.floor(Math.random() * 10));
+  cache.put("otp_" + email, JSON.stringify({
+    code: code,
+    email: email,
+    exp: Date.now() + CONFIG.OTP_TTL_SEC * 1000,
+    tries: 0
+  }), CONFIG.OTP_TTL_SEC);
+  cache.put("otp_sent_" + email, "1", 90);
+  if (hourCount_("otp") >= 25) {
+    throw new Error("目前驗證信件發送次數已達上限，請一小時後再試。");
+  }
+  sendMailSafe_({
+    to: email,
+    subject: "入館資料表電子郵件驗證碼",
+    name: "Nico Nico Pet House",
+    body:
+      "您好，\n\n" +
+      "您的入館電子郵件驗證碼：" + code + "\n" +
+      "請於 10 分鐘內輸入。若不是您本人操作，請忽略此信。\n\n" +
+      CONFIG.BUSINESS_NAME + "\n"
+  });
+  bumpHour_("otp");
+  return { success: true, channel: "email", emailMasked: maskEmail_(email) };
+}
+
+function submit_(payload) {
+  verifyTurnstile_(payload.turnstileToken);
+  var form = payload.form || {};
+  var owner = form.owner || {};
+  var list = petsOf_(form);
+  if (!list.length) throw new Error("請填寫毛孩資料。");
+  var phone = String(owner.phone || "").replace(/\D/g, "");
+  if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
+  if (String(owner.address || "").trim().length < 2) throw new Error("請填寫家長地址或社區名稱及樓號。");
+  var email = emailKey_(owner.email);
+  if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
+  verifyOtp_(email, String(payload.otp || ""));
+  if (!payload.agreedToTerms) throw new Error("請先同意條款並完成簽署。");
+  if (!payload.agreedToPhoto) throw new Error("請先同意毛孩影像拍攝與使用。");
+  if (!payload.signatureDataUrl) throw new Error("找不到手寫簽名，請返回上一步重簽。");
+
+  var pet = list[0].pet || {};
+  var care = list[0].care || pet;
+  var caseId = makeCaseId_();
+  var now = new Date();
+  var tzNow = Utilities.formatDate(now, "Asia/Taipei", "yyyy-MM-dd HH:mm:ss");
+  var names = [pet.name].filter(function (n) { return n; });
+  var folder = getRootFolder_();
+  var caseFolder = folder.createFolder(
+    caseId + "_" + safeName_(pet.name || "毛孩") + "_" + Utilities.formatDate(now, "Asia/Taipei", "yyyyMMdd")
+  );
+  var signBlob = dataUrlToBlob_(payload.signatureDataUrl, caseId + "_簽名.png");
+  var signFile = caseFolder.createFile(signBlob);
+  var pdfFile = createPdf_(caseFolder, caseId, tzNow, owner, pet, care, payload, signBlob);
+  try { pdfFile.addViewer(String(owner.email || "")); } catch (e1) {}
+  try { signFile.addViewer(String(owner.email || "")); } catch (e2) {}
+  appendRow_(caseId, tzNow, owner, pet, care, payload, caseFolder.getUrl(), pdfFile.getUrl(), signFile.getUrl());
+
+  var mailed = false;
+  try {
+    sendCustomerMail_(owner, names, caseId, pdfFile);
+    mailed = true;
+    if (CONFIG.BUSINESS_EMAIL) sendBusinessMail_(owner, names, caseId, pdfFile, caseFolder.getUrl());
+  } catch (mailErr) {
+    mailed = false;
+  }
+  consumeOtp_(email);
+  return {
+    success: true,
+    caseId: caseId,
+    pdfUrl: pdfFile.getUrl(),
+    message: mailed
+      ? "入館資料已送出（" + (pet.name || "毛孩") + "）。副本已寄到 " + owner.email + "。"
+      : "入館資料已送出。案件與 PDF 已存檔；目前 Google 寄信受限，請用案件查詢或雲端連結取得副本。"
+  };
+}
+
+function lookup_(payload) {
+  verifyTurnstile_(payload.turnstileToken);
+  var email = emailKey_(payload.email);
+  if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
+  verifyOtp_(email, String(payload.otp || ""));
+  var values = getSheet_().getDataRange().getDisplayValues();
+  var map = {};
+  var order = [];
+  for (var r = values.length - 1; r >= 1; r--) {
+    var row = values[r];
+    if (emailKey_(row[4]) !== email) continue;
+    var id = String(row[0] || "");
+    if (!id) continue;
+    if (!map[id]) {
+      map[id] = { caseId: id, submittedAt: row[1] || "", petNames: [], pdfUrl: row[22] || "" };
+      order.push(id);
+    }
+    if (row[6]) map[id].petNames.push(String(row[6]));
+    if (!map[id].pdfUrl && row[22]) map[id].pdfUrl = row[22];
+    if (order.length >= 30) break;
+  }
+  consumeOtp_(email);
+  return { success: true, cases: order.map(function (id) { return map[id]; }) };
+}
+
+function petsOf_(form) {
+  if (form.pets && form.pets.length) {
+    return form.pets.map(function (p) { return { pet: p, care: p }; });
+  }
+  if (form.pet) return [{ pet: form.pet, care: form.care || {} }];
+  return [];
+}
+
+function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl, signUrl) {
+  var diseases = join_(care.diseases);
+  if (care.diseaseOther) diseases += (diseases ? "；" : "") + care.diseaseOther;
+  var walk = care.walk || "";
+  if (care.walkNote) walk += (walk ? "；" : "") + care.walkNote;
+  var snack = care.snack || "";
+  if (care.snackAllergy) snack += (snack ? "；" : "") + care.snackAllergy;
+  getSheet_().appendRow([
+    caseId, tzNow, owner.name || "", owner.phone || "", owner.email || "", owner.address || "",
+    pet.name || "", pet.gender || "", pet.breed || "", pet.age || "", pet.weightKg || "",
+    pet.neutered || care.neutered || "", pet.chip || care.chip || "", care.preventative || "",
+    diseases, care.appetite || "", care.stool || "", walk, snack,
+    payload.agreedToTerms && payload.agreedToPhoto ? "電子簽章、毛孩影像" : (payload.agreedToTerms ? "電子簽章" : "否"),
+    payload.agreedAt || "", folderUrl, pdfUrl, signUrl
+  ]);
+}
+
+function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) {
+  owner = owner || {};
+  pet = pet || {};
+  care = care || pet;
+  var doc = DocumentApp.create("入館資料表 " + caseId);
+  var body = doc.getBody();
+  body.setMarginTop(22);
+  body.setMarginBottom(22);
+  body.setMarginLeft(26);
+  body.setMarginRight(26);
+  body.clear();
+  var top = body.appendTable([["", ""]]);
+  paintCell_(top.getCell(0, 0), "寵物入館資料表", { bg: FORM.oat, fg: FORM.ink, bold: true, size: 16 });
+  paintCell_(top.getCell(0, 1), "Nico Nico Pet House\n尼口尼口寵物精緻美容＆旅館", { bg: FORM.oat, fg: FORM.mute, size: 9, align: DocumentApp.HorizontalAlignment.RIGHT });
+  top.setBorderColor(FORM.line);
+  var meta = body.appendTable([["", ""]]);
+  paintCell_(meta.getCell(0, 0), "案件識別碼  " + caseId, { bg: FORM.cream, size: 9 });
+  paintCell_(meta.getCell(0, 1), "填表日期  " + tzNow, { bg: FORM.cream, size: 9, align: DocumentApp.HorizontalAlignment.RIGHT });
+  meta.setBorderColor(FORM.line);
+  kvTable_(body, [
+    ["毛孩家長", owner.name, "聯繫電話", owner.phone],
+    ["電子信箱", owner.email, "地址", owner.address]
+  ]);
+  bar_(body, "毛孩　" + (pet.name || ""));
+  kvTable_(body, [
+    ["毛孩名字", pet.name, "品種", pet.breed],
+    ["年齡", pet.age, "體重", pet.weightKg ? pet.weightKg + " kg" : ""],
+    ["性別", checksLine_(["男", "女"], pet.gender), "節育", checksLine_(["已節育", "未節育"], pet.neutered || care.neutered)],
+    ["晶片號碼", pet.chip || care.chip || "未填", "定期投藥", checksLine_(["是", "否"], care.preventative)],
+    ["最近食慾", checksLine_(["馬上吃完", "看心情吃", "不吃"], care.appetite), "最近排便", checksLine_(["正常", "軟便", "拉稀"], care.stool)],
+    ["散步", checksLine_(["暴衝", "不走草", "不散步", "備註"], care.walk) + extra_(care.walkNote), "館內點心", checksLine_(["是", "否", "食物過敏"], care.snack) + extra_(care.snackAllergy)]
+  ]);
+  checkBlock_(body, "病史", ["癲癇", "心臟病", "其他", "無"], care.diseases, care.diseaseOther);
+  bar_(body, "飼主簽名");
+  var sign = body.appendTable([["", ""]]);
+  paintCell_(sign.getCell(0, 0), "本人已詳閱並同意採用電子文件與手寫電子簽章方式簽署本契約，其法律效力等同於實體紙本簽章。\n本人同意本館於入館期間拍攝毛孩影像，並依條款所定範圍用於照護紀錄、官方網站及社群宣傳。\n電子簽章同意：" + (payload.agreedToTerms ? "是" : "否") + "　毛孩影像同意：" + (payload.agreedToPhoto ? "是" : "否") + "\n簽署時間：" + (prettyTime_(payload.agreedAt) || tzNow), { bg: FORM.paper, size: 9 });
+  paintCell_(sign.getCell(0, 1), " ", { bg: FORM.paper });
+  sign.setBorderColor(FORM.line);
+  if (signBlob) {
+    try {
+      var img = sign.getCell(0, 1).appendImage(signBlob);
+      var iw = Number(img.getWidth()) || 1;
+      var ih = Number(img.getHeight()) || 1;
+      if (iw / ih > 8) ih = iw / 3.2;
+      var scale = Math.min(240 / iw, 90 / ih, 1);
+      if (scale <= 0) scale = 0.5;
+      img.setWidth(Math.max(120, iw * scale));
+      img.setHeight(Math.max(40, ih * scale));
+    } catch (e3) {}
+  }
+  var foot = body.appendParagraph("尼口尼口寵物精緻美容＆旅館　入館資料電子正本");
+  foot.setForegroundColor(FORM.mute);
+  foot.setFontSize(8);
+  foot.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  doc.saveAndClose();
+  var docFile = DriveApp.getFileById(doc.getId());
+  var pdfBlob = docFile.getAs(MimeType.PDF).setName(caseId + "_入館資料表.pdf");
+  docFile.setTrashed(true);
+  return folder.createFile(pdfBlob);
+}
+
+function getRootFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = String(CONFIG.FOLDER_ID || props.getProperty("FOLDER_ID") || "");
+  if (id) {
+    try { return DriveApp.getFolderById(id); } catch (err) {}
+  }
+  var existing = DriveApp.getRootFolder().getFoldersByName(CONFIG.FOLDER_NAME);
+  var folder = existing.hasNext() ? existing.next() : DriveApp.createFolder(CONFIG.FOLDER_NAME);
+  props.setProperty("FOLDER_ID", folder.getId());
+  return folder;
+}
+
+function getSheet_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = CONFIG.SHEET_ID || props.getProperty("SHEET_ID") || "";
+  var ss = null;
+  if (id) {
+    try { ss = SpreadsheetApp.openById(id); } catch (err) { ss = null; }
+  }
+  if (!ss) {
+    var folder = getRootFolder_();
+    var files = folder.getFilesByName(CONFIG.SPREADSHEET_NAME);
+    if (files.hasNext()) {
+      ss = SpreadsheetApp.open(files.next());
+    } else {
+      ss = SpreadsheetApp.create(CONFIG.SPREADSHEET_NAME);
+      DriveApp.getFileById(ss.getId()).moveTo(folder);
+    }
+    props.setProperty("SHEET_ID", ss.getId());
+  }
+  var sh = ss.getSheetByName(CONFIG.SHEET_NAME) || ss.getSheets()[0];
+  sh.setName(CONFIG.SHEET_NAME);
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, SHEET_HEADERS.length).setValues([SHEET_HEADERS]);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, SHEET_HEADERS.length).setFontWeight("bold");
+  }
+  return sh;
+}
+
+function findEmailRow_(email) {
+  email = emailKey_(email);
+  try {
+    var values = getSheet_().getDataRange().getDisplayValues();
+    for (var r = values.length - 1; r >= 1; r--) {
+      if (emailKey_(values[r][4]) === email) return true;
+    }
+  } catch (err) {}
+  return false;
+}
+
+function emailKey_(email) { return String(email || "").trim().toLowerCase(); }
+function isEmail_(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "")); }
+function maskEmail_(email) {
+  var s = String(email || "").trim();
+  var at = s.indexOf("@");
+  if (at < 1) return "***";
+  var user = s.slice(0, at);
+  var domain = s.slice(at);
+  if (user.length <= 1) return "*" + domain;
+  return user.charAt(0) + "***" + domain;
+}
+
+function verifyOtp_(email, otp) {
+  email = emailKey_(email);
+  var rec = readOtp_(email);
+  rec.tries = (rec.tries || 0) + 1;
+  if (rec.tries > CONFIG.OTP_MAX_TRIES) {
+    consumeOtp_(email);
+    throw new Error("驗證碼錯誤次數過多，請重新發送。");
+  }
+  if (String(rec.code) !== String(otp)) {
+    CacheService.getScriptCache().put("otp_" + email, JSON.stringify(rec), CONFIG.OTP_TTL_SEC);
+    throw new Error("驗證碼不正確，請再試一次。");
+  }
+}
+function readOtp_(email) {
+  var raw = CacheService.getScriptCache().get("otp_" + emailKey_(email));
+  if (!raw) throw new Error("驗證碼已過期或尚未發送，請重新取得驗證碼。");
+  return JSON.parse(raw);
+}
+function consumeOtp_(email) {
+  CacheService.getScriptCache().remove("otp_" + emailKey_(email));
+}
+
+function verifyTurnstile_(token) {
+  var secret = String(CONFIG.TURNSTILE_SECRET || "").trim();
+  if (!secret) return;
+  if (!String(token || "").trim()) throw new Error("請先完成人機驗證後再試。");
+  var res = UrlFetchApp.fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "post",
+    payload: { secret: secret, response: String(token) },
+    muteHttpExceptions: true
+  });
+  var body;
+  try { body = JSON.parse(res.getContentText() || "{}"); } catch (err) {
+    throw new Error("人機驗證暫時無法確認，請稍後再試。");
+  }
+  if (!body || body.success !== true) throw new Error("人機驗證未通過，請重新勾選後再試。");
+}
+
+function sendCustomerMail_(owner, names, caseId, pdfFile) {
+  var to = String(owner.email || "");
+  if (!to) return;
+  var petLabel = (names && names.length) ? names.join("、") : "毛孩";
+  var pdfUrl = pdfFile ? pdfFile.getUrl() : "";
+  var opts = {
+    to: to,
+    subject: "入館資料已受理 " + caseId,
+    name: "Nico Nico Pet House",
+    body:
+      (owner.name || "") + " 您好，\n\n" +
+      "我們已收到毛孩 " + petLabel + " 的入館資料與電子簽署。\n" +
+      "案件識別碼：" + caseId + "\n" +
+      (pdfUrl ? ("完整表單 PDF：" + pdfUrl + "\n") : "") +
+      "也可到網站以電子郵件驗證碼查詢案件。\n\n" +
+      CONFIG.BUSINESS_NAME + "\n"
+  };
+  if (CONFIG.ATTACH_PDF && pdfFile) {
+    opts.attachments = [pdfFile.getBlob().setName(caseId + "_入館資料表.pdf")];
+  }
+  sendMailSafe_(opts);
+}
+
+function sendBusinessMail_(owner, names, caseId, pdfFile, folderUrl) {
+  var petLabel = (names && names.length) ? names.join("、") : "";
+  sendMailSafe_({
+    to: CONFIG.BUSINESS_EMAIL,
+    subject: "新入館 " + caseId + " " + petLabel,
+    name: "入館資料表",
+    body:
+      "新的入館資料已寫入試算表並存雲端。\n" +
+      "案件：" + caseId + "\n飼主：" + (owner.name || "") + " " + (owner.phone || "") +
+      "\n毛孩：" + petLabel + "\n資料夾：" + (folderUrl || "") + "\n"
+  });
+}
+
+function sendMailSafe_(opts) {
+  if (CONFIG.SEND_MAIL === false) throw new Error("目前暫停寄信。");
+  if (hourCount_("mail") >= (CONFIG.MAIL_HOUR_CAP || 40)) {
+    throw new Error("本小時寄信次數已達上限，請稍後再試。");
+  }
+  MailApp.sendEmail(opts);
+  bumpHour_("mail");
+}
+
+function hourKey_(kind) {
+  return "hour_" + kind + "_" + Utilities.formatDate(new Date(), "Asia/Taipei", "yyyyMMddHH");
+}
+function hourCount_(kind) {
+  var n = Number(CacheService.getScriptCache().get(hourKey_(kind)) || "0");
+  return isNaN(n) ? 0 : n;
+}
+function bumpHour_(kind) {
+  CacheService.getScriptCache().put(hourKey_(kind), String(hourCount_(kind) + 1), 3600);
+}
+
+function friendlyErr_(err) {
+  var m = String(err && err.message ? err.message : err || "");
+  if (/指定 ID|specified ID|not found|沒有編輯/i.test(m)) {
+    return "雲端資料夾尚未建立或沒有權限。請在 Apps Script 存檔並「管理部署 → 新版本」後再送出，系統會自動建立資料夾。";
+  }
+  if (/授權|Authorization|Access denied|權限/i.test(m)) {
+    return "Google 尚未授權雲端或試算表權限。請在 Apps Script 重新授權後再試。";
+  }
+  if (/limit|quota|Mail service|disabled|blocked|restricted|Gmail|寄信/i.test(m)) {
+    return "Google 目前暫時限制此帳號寄信。請先停止測試、等 24 小時後再授權一次。入館資料仍可寫入雲端與試算表。";
+  }
+  return m || "伺服器暫時無法處理，請稍後再試。";
+}
+
+var FORM = {
+  oat: "#DDE1D4",
+  cream: "#F6F5F0",
+  paper: "#FBFAF6",
+  bar: "#4A4D42",
+  ink: "#3F4239",
+  mute: "#6F7468",
+  line: "#C9D0C0",
+  check: "#E8ECDD"
+};
+
+function paintCell_(cell, text, opt) {
+  opt = opt || {};
+  cell.setBackgroundColor(opt.bg || FORM.cream);
+  cell.setPaddingTop(4);
+  cell.setPaddingBottom(4);
+  cell.setPaddingLeft(6);
+  cell.setPaddingRight(6);
+  var txt = text == null || String(text) === "" ? " " : String(text);
+  var para = cell.getChild(0).asParagraph();
+  para.setText(txt);
+  para.setFontSize(opt.size || 9);
+  para.setForegroundColor(opt.fg || FORM.ink);
+  para.setBold(!!opt.bold);
+  if (opt.align) para.setAlignment(opt.align);
+  while (cell.getNumChildren() > 1) cell.getChild(cell.getNumChildren() - 1).removeFromParent();
+  return cell;
+}
+function kvTable_(body, rows) {
+  var table = body.appendTable(rows.map(function () { return ["", "", "", ""]; }));
+  table.setBorderColor(FORM.line);
+  rows.forEach(function (r, i) {
+    paintCell_(table.getCell(i, 0), r[0], { bg: FORM.oat, fg: FORM.ink, bold: true, size: 8 });
+    paintCell_(table.getCell(i, 1), r[1], { bg: FORM.paper, size: 10 });
+    paintCell_(table.getCell(i, 2), r[2], { bg: r[2] ? FORM.oat : FORM.paper, fg: FORM.ink, bold: !!r[2], size: 8 });
+    paintCell_(table.getCell(i, 3), r[3], { bg: FORM.paper, size: 10 });
+  });
+  return table;
+}
+function bar_(body, title) {
+  var table = body.appendTable([[title]]);
+  paintCell_(table.getCell(0, 0), title, { bg: FORM.bar, fg: "#F6F5F0", bold: true, size: 10 });
+  table.setBorderColor(FORM.bar);
+  return table;
+}
+function checksLine_(items, selected) {
+  var map = selectedMap_(selected);
+  return (items || []).map(function (label) {
+    return (map[label] ? "☑ " : "☐ ") + label;
+  }).join("   ");
+}
+function checkBlock_(body, title, items, selected, extraText) {
+  var cols = 4;
+  var map = selectedMap_(selected);
+  var data = [];
+  var first = [title];
+  var i;
+  for (i = 0; i < cols; i++) first.push(items[i] ? ((map[items[i]] ? "☑ " : "☐ ") + items[i]) : "");
+  data.push(first);
+  for (i = cols; i < items.length; i += cols) {
+    var r = [""];
+    var j;
+    for (j = 0; j < cols; j++) r.push(items[i + j] ? ((map[items[i + j]] ? "☑ " : "☐ ") + items[i + j]) : "");
+    data.push(r);
+  }
+  if (extraText) data.push(["補充", extraText, "", "", ""]);
+  var table = body.appendTable(data.map(function (row) {
+    return row.map(function () { return ""; });
+  }));
+  table.setBorderColor(FORM.line);
+  data.forEach(function (row, ri) {
+    row.forEach(function (txt, ci) {
+      if (ci === 0) {
+        paintCell_(table.getCell(ri, ci), ri === 0 ? title : (txt === "補充" ? "補充" : " "), { bg: FORM.oat, fg: FORM.ink, bold: true, size: 8 });
+      } else {
+        var on = /^\s*☑/.test(txt);
+        paintCell_(table.getCell(ri, ci), txt, { bg: on ? FORM.check : FORM.paper, fg: on ? FORM.ink : FORM.mute, bold: on, size: 8 });
+      }
+    });
+  });
+  return table;
+}
+function selectedMap_(v) {
+  var map = {};
+  if (Array.isArray(v)) v.forEach(function (x) { if (x) map[String(x)] = true; });
+  else if (v) map[String(v)] = true;
+  return map;
+}
+function extra_(s) { return s ? "（" + s + "）" : ""; }
+function prettyTime_(v) {
+  if (!v) return "";
+  try {
+    var d = new Date(v);
+    if (!isNaN(d.getTime())) return Utilities.formatDate(d, "Asia/Taipei", "yyyy年MM月dd日 HH:mm:ss");
+  } catch (err) {}
+  return String(v);
+}
+function join_(v) {
+  if (Array.isArray(v)) return v.filter(function (x) { return x; }).join("、");
+  return v == null ? "" : String(v);
+}
+function makeCaseId_() {
+  var d = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyyMMdd");
+  var n = Math.floor(Math.random() * 36 * 36 * 36 * 36).toString(36).toUpperCase();
+  while (n.length < 4) n = "0" + n;
+  return "IC-" + d + "-" + n;
+}
+function safeName_(s) {
+  return String(s || "").replace(/[\\/:*?"<>|]/g, "").slice(0, 20) || "毛孩";
+}
+function dataUrlToBlob_(dataUrl, name) {
+  var m = String(dataUrl || "").match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) throw new Error("簽名圖檔格式不正確，請清除後重簽。");
+  return Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], name);
+}
+function parsePayload_(e) {
+  if (!e) return {};
+  if (e.parameter && e.parameter.payload) {
+    try { return JSON.parse(e.parameter.payload); } catch (err3) {}
+  }
+  if (e.postData && e.postData.contents) {
+    var raw = e.postData.contents;
+    try { return JSON.parse(raw); } catch (err) {}
+    try {
+      var params = {};
+      String(raw).split("&").forEach(function (part) {
+        var i = part.indexOf("=");
+        if (i < 0) return;
+        var k = decodeURIComponent(part.slice(0, i).replace(/\+/g, " "));
+        var v = decodeURIComponent(part.slice(i + 1).replace(/\+/g, " "));
+        params[k] = v;
+      });
+      if (params.payload) return JSON.parse(params.payload);
+      return params;
+    } catch (err2) {}
+  }
+  return e.parameter || {};
+}
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
