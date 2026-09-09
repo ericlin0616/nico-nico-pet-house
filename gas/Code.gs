@@ -63,8 +63,14 @@ function doPost(e) {
     var payload = parsePayload_(e);
     var action = String(payload.action || "");
     if (action === "sendOtp") return json_(sendOtp_(payload));
-    if (action === "submit") return json_(submit_(payload));
-    if (action === "lookup") return json_(lookup_(payload));
+    if (action === "submit") {
+      if (payload.formType === "checkin") return json_(submitCheckin_(payload));
+      return json_(submit_(payload));
+    }
+    if (action === "lookup") {
+      if (payload.formType === "checkin") return json_(lookupCheckin_(payload));
+      return json_(lookup_(payload));
+    }
     return json_({ success: false, message: "未知的操作，請重新整理頁面後再試。" });
   } catch (err) {
     return json_({ success: false, message: friendlyErr_(err) });
@@ -79,8 +85,11 @@ function sendOtp_(payload) {
   if (!isEmail_(email)) {
     throw new Error("電子信箱格式不正確。");
   }
-  if (payload.purpose === "lookup" && !findEmailRow_(email)) {
-    throw new Error("找不到此電子信箱的入園紀錄，請確認信箱或先完成登記。");
+  if (payload.purpose === "lookup") {
+    var found = payload.formType === "checkin" ? findCheckinEmail_(email) : findEmailRow_(email);
+    if (!found) {
+      throw new Error("找不到此電子信箱的登記紀錄，請確認信箱或先完成登記。");
+    }
   }
   var cache = CacheService.getScriptCache();
   if (cache.get("otp_sent_" + email)) {
@@ -836,11 +845,11 @@ function join_(v) {
   return v == null ? "" : String(v);
 }
 
-function makeCaseId_() {
+function makeCaseId_(prefix) {
   var d = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyyMMdd");
   var n = Math.floor(Math.random() * 36 * 36 * 36 * 36).toString(36).toUpperCase();
   while (n.length < 4) n = "0" + n;
-  return "NP-" + d + "-" + n;
+  return (prefix || "NP") + "-" + d + "-" + n;
 }
 
 function safeName_(s) {
@@ -893,3 +902,211 @@ function esc_(s) {
     return "&#39;";
   });
 }
+
+var CHECKIN_HEADERS = [
+  "案件識別碼", "送出時間", "飼主名稱", "聯絡電話", "電子信箱", "地址",
+  "緊急聯絡人", "緊急聯絡人電話", "毛孩名字", "性別", "品種", "年齡", "體重kg",
+  "節育", "晶片號碼", "定期投藥", "病史", "最近食慾", "最近排便", "散步", "館內點心",
+  "緊急送醫指定", "獸醫院名稱與電話", "已同意條款", "簽署時間", "雲端資料夾", "PDF連結", "簽名檔"
+];
+
+function getCheckinSheet_() {
+  var ssId = "";
+  var shName = "入館登記";
+  try {
+    var props = PropertiesService.getScriptProperties();
+    ssId = String(CONFIG.SHEET_ID || props.getProperty("SHEET_ID") || "");
+  } catch (e1) {}
+  var ss = null;
+  if (ssId) {
+    try { ss = SpreadsheetApp.openById(ssId); } catch (e2) { ss = null; }
+  }
+  if (!ss) ss = getSheet_().getParent();
+  var sh = ss.getSheetByName(shName);
+  if (!sh) sh = ss.insertSheet(shName);
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, CHECKIN_HEADERS.length).setValues([CHECKIN_HEADERS]);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, CHECKIN_HEADERS.length).setFontWeight("bold");
+  }
+  return sh;
+}
+
+function findCheckinEmail_(email) {
+  email = emailKey_(email);
+  try {
+    var values = getCheckinSheet_().getDataRange().getDisplayValues();
+    for (var r = values.length - 1; r >= 1; r--) {
+      if (emailKey_(values[r][4]) === email) return true;
+    }
+  } catch (err) {}
+  return false;
+}
+
+function submitCheckin_(payload) {
+  verifyTurnstile_(payload.turnstileToken);
+  var form = payload.form || {};
+  var owner = form.owner || {};
+  var list = petsOf_(form);
+  if (!list.length) throw new Error("請填寫毛孩資料。");
+  var phone = String(owner.phone || "").replace(/\D/g, "");
+  if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
+  if (String(owner.address || "").trim().length < 2) throw new Error("請填寫家長地址或社區名稱及樓號。");
+  if (String(owner.emergencyName || "").trim().length < 2) throw new Error("請填寫緊急聯絡人。");
+  if (!/^\d{10}$/.test(String(owner.emergencyPhone || "").replace(/\D/g, ""))) throw new Error("請填寫 10 碼緊急聯絡人電話。");
+  var email = emailKey_(owner.email);
+  if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
+  verifyOtp_(email, String(payload.otp || ""));
+  if (!payload.agreedToTerms) throw new Error("請先同意條款並完成簽署。");
+  if (!payload.agreedToPhoto) throw new Error("請先同意毛孩影像拍攝與使用。");
+  if (!payload.signatureDataUrl) throw new Error("找不到手寫簽名，請返回上一步重簽。");
+
+  var pet = list[0].pet || {};
+  var care = list[0].care || pet;
+  if (care.hasVet === "是") {
+    if (String(care.vetName || "").trim().length < 2) throw new Error("請填寫指定醫院名稱。");
+    if (!/^04\d{8}$/.test(String(care.vetPhone || "").replace(/\D/g, ""))) {
+      throw new Error("指定醫院電話請填 04 開頭 10 碼。");
+    }
+  }
+
+  var caseId = makeCaseId_("IC");
+  var now = new Date();
+  var tzNow = Utilities.formatDate(now, "Asia/Taipei", "yyyy-MM-dd HH:mm:ss");
+  var names = [pet.name].filter(function (n) { return n; });
+  var folder = getRootFolder_();
+  var caseFolder = folder.createFolder(
+    caseId + "_" + safeName_(pet.name || "毛孩") + "_" + Utilities.formatDate(now, "Asia/Taipei", "yyyyMMdd")
+  );
+  var signBlob = dataUrlToBlob_(payload.signatureDataUrl, caseId + "_簽名.png");
+  var signFile = caseFolder.createFile(signBlob);
+  var pdfFile = createCheckinPdf_(caseFolder, caseId, tzNow, owner, pet, care, payload, signBlob);
+  try { pdfFile.addViewer(String(owner.email || "")); } catch (e1) {}
+  try { signFile.addViewer(String(owner.email || "")); } catch (e2) {}
+  appendCheckinRow_(caseId, tzNow, owner, pet, care, payload, caseFolder.getUrl(), pdfFile.getUrl(), signFile.getUrl());
+
+  var mailed = false;
+  try {
+    sendCustomerMail_(owner, names, caseId, pdfFile);
+    mailed = true;
+    if (CONFIG.BUSINESS_EMAIL) sendBusinessMail_(owner, names, caseId, pdfFile, caseFolder.getUrl());
+  } catch (mailErr) {
+    mailed = false;
+  }
+  consumeOtp_(email);
+  return {
+    success: true,
+    caseId: caseId,
+    pdfUrl: pdfFile.getUrl(),
+    message: mailed
+      ? "入館資料已送出（" + (pet.name || "毛孩") + "）。副本已寄到 " + owner.email + "。"
+      : "入館資料已送出。案件與 PDF 已存檔；目前 Google 寄信受限，請用案件查詢或雲端連結取得副本。"
+  };
+}
+
+function lookupCheckin_(payload) {
+  verifyTurnstile_(payload.turnstileToken);
+  var email = emailKey_(payload.email);
+  if (!isEmail_(email)) throw new Error("電子信箱格式不正確。");
+  verifyOtp_(email, String(payload.otp || ""));
+  var values = getCheckinSheet_().getDataRange().getDisplayValues();
+  var map = {};
+  var order = [];
+  for (var r = values.length - 1; r >= 1; r--) {
+    var row = values[r];
+    if (emailKey_(row[4]) !== email) continue;
+    var id = String(row[0] || "");
+    if (!id) continue;
+    if (!map[id]) {
+      map[id] = { caseId: id, submittedAt: row[1] || "", petNames: [], pdfUrl: row[26] || "" };
+      order.push(id);
+    }
+    if (row[8]) map[id].petNames.push(String(row[8]));
+    if (!map[id].pdfUrl && row[26]) map[id].pdfUrl = row[26];
+    if (order.length >= 30) break;
+  }
+  consumeOtp_(email);
+  return { success: true, cases: order.map(function (id) { return map[id]; }) };
+}
+
+function appendCheckinRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl, signUrl) {
+  var diseases = join_(care.diseases);
+  if (care.diseaseOther) diseases += (diseases ? "；" : "") + care.diseaseOther;
+  var walk = care.walk || "";
+  if (care.walkNote) walk += (walk ? "；" : "") + care.walkNote;
+  var snack = care.snack || "";
+  if (care.snackAllergy) snack += (snack ? "；" : "") + care.snackAllergy;
+  getCheckinSheet_().appendRow([
+    caseId, tzNow, owner.name || "", owner.phone || "", owner.email || "", owner.address || "",
+    owner.emergencyName || "", owner.emergencyPhone || "", pet.name || "", pet.gender || "",
+    pet.breed || "", pet.age || "", pet.weightKg || "", pet.neutered || care.neutered || "",
+    pet.chip || care.chip || "", care.preventative || "", diseases, care.appetite || "",
+    care.stool || "", walk, snack, care.hasVet || "", vetLine_(care),
+    payload.agreedToTerms && payload.agreedToPhoto ? "電子簽章、毛孩影像" : (payload.agreedToTerms ? "電子簽章" : "否"),
+    payload.agreedAt || "", folderUrl, pdfUrl, signUrl
+  ]);
+}
+
+function createCheckinPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) {
+  owner = owner || {};
+  pet = pet || {};
+  care = care || pet;
+  var doc = DocumentApp.create("入館資料表 " + caseId);
+  var body = doc.getBody();
+  body.setMarginTop(22);
+  body.setMarginBottom(22);
+  body.setMarginLeft(26);
+  body.setMarginRight(26);
+  body.clear();
+  var top = body.appendTable([["", ""]]);
+  paintCell_(top.getCell(0, 0), "寵物入館資料表", { bg: FORM.oat, fg: FORM.ink, bold: true, size: 16 });
+  paintCell_(top.getCell(0, 1), "Nico Nico Pet House\n尼口尼口寵物精緻美容＆旅館", { bg: FORM.oat, fg: FORM.mute, size: 9, align: DocumentApp.HorizontalAlignment.RIGHT });
+  top.setBorderColor(FORM.line);
+  var meta = body.appendTable([["", ""]]);
+  paintCell_(meta.getCell(0, 0), "案件識別碼  " + caseId, { bg: FORM.cream, size: 9 });
+  paintCell_(meta.getCell(0, 1), "填表日期  " + tzNow, { bg: FORM.cream, size: 9, align: DocumentApp.HorizontalAlignment.RIGHT });
+  meta.setBorderColor(FORM.line);
+  kvTable_(body, [
+    ["毛孩家長", owner.name, "聯繫電話", owner.phone],
+    ["電子信箱", owner.email, "地址", owner.address],
+    ["緊急聯絡人", owner.emergencyName, "緊急聯繫電話", owner.emergencyPhone]
+  ]);
+  bar_(body, "毛孩　" + (pet.name || ""));
+  kvTable_(body, [
+    ["毛孩名字", pet.name, "品種", pet.breed],
+    ["年齡", pet.age, "體重", pet.weightKg ? pet.weightKg + " kg" : ""],
+    ["性別", checksLine_(["男", "女"], pet.gender), "節育", checksLine_(["已節育", "未節育"], pet.neutered || care.neutered)],
+    ["晶片號碼", pet.chip || care.chip || "未填", "定期投藥", checksLine_(["是", "否"], care.preventative)],
+    ["最近食慾", checksLine_(["馬上吃完", "看心情吃", "不吃"], care.appetite), "最近排便", checksLine_(["正常", "軟便", "拉稀"], care.stool)],
+    ["散步", checksLine_(["暴衝", "不走草", "不散步", "備註"], care.walk) + extra_(care.walkNote), "館內點心", checksLine_(["是", "否", "食物過敏"], care.snack) + extra_(care.snackAllergy)],
+    ["緊急送醫", care.hasVet === "是" ? "指定醫院" : (care.hasVet === "否" ? "由店家送至獸醫診療場所" : ""), "指定醫院", care.hasVet === "是" ? vetLine_(care) : "無指定"]
+  ]);
+  checkBlock_(body, "病史", ["癲癇", "心臟病", "其他", "無"], care.diseases, care.diseaseOther);
+  bar_(body, "飼主簽名");
+  var sign = body.appendTable([["", ""]]);
+  paintCell_(sign.getCell(0, 0), "本人已詳閱並同意採用電子文件與手寫電子簽章方式簽署本契約，其法律效力等同於實體紙本簽章。\n本人同意本館於入館期間拍攝毛孩影像，並依條款所定範圍用於照護紀錄、官方網站及社群宣傳。\n電子簽章同意：" + (payload.agreedToTerms ? "是" : "否") + "　毛孩影像同意：" + (payload.agreedToPhoto ? "是" : "否") + "\n簽署時間：" + (prettyTime_(payload.agreedAt) || tzNow), { bg: FORM.paper, size: 9 });
+  paintCell_(sign.getCell(0, 1), " ", { bg: FORM.paper });
+  sign.setBorderColor(FORM.line);
+  if (signBlob) {
+    try {
+      var img = sign.getCell(0, 1).appendImage(signBlob);
+      var iw = Number(img.getWidth()) || 1;
+      var ih = Number(img.getHeight()) || 1;
+      if (iw / ih > 8) ih = iw / 3.2;
+      var scale = Math.min(240 / iw, 90 / ih, 1);
+      if (scale <= 0) scale = 0.5;
+      img.setWidth(Math.max(120, iw * scale));
+      img.setHeight(Math.max(40, ih * scale));
+    } catch (e3) {}
+  }
+  var foot = body.appendParagraph("尼口尼口寵物精緻美容＆旅館　入館資料電子正本");
+  foot.setForegroundColor(FORM.mute);
+  foot.setFontSize(8);
+  foot.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  doc.saveAndClose();
+  var docFile = DriveApp.getFileById(doc.getId());
+  var pdfBlob = docFile.getAs(MimeType.PDF).setName(caseId + "_入館資料表.pdf");
+  docFile.setTrashed(true);
+  return folder.createFile(pdfBlob);
+}
+
