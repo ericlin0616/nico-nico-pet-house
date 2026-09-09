@@ -124,6 +124,12 @@ function submit_(payload) {
 
   var pet = list[0].pet || {};
   var care = list[0].care || pet;
+  var chip = String(pet.chip || care.chip || "").replace(/\D/g, "");
+  if (String(pet.chip || care.chip || "") && !/^\d{1,15}$/.test(String(pet.chip || care.chip || "").replace(/\s/g, ""))) {
+    throw new Error("晶片號碼只能填數字，請勿含英文字母、空格或連字號。");
+  }
+  pet.chip = chip;
+  care.chip = chip;
   var caseId = makeCaseId_();
   var now = new Date();
   var tzNow = Utilities.formatDate(now, "Asia/Taipei", "yyyy-MM-dd HH:mm:ss");

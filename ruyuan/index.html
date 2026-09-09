@@ -1598,7 +1598,8 @@
           </div>
           <div class="field">
             <label for="p__IDX___chip">晶片號碼</label>
-            <input id="p__IDX___chip" data-k="chip" type="text" inputmode="numeric" maxlength="20" placeholder="選填" />
+            <input id="p__IDX___chip" data-k="chip" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="15" autocomplete="off" placeholder="僅數字" />
+            <span class="hint">限 15 位數字，請勿輸入英文字母、空格或連字號</span>
             <p class="error" data-err="p__IDX___chip"></p>
           </div>
           <fieldset class="field">
@@ -1945,7 +1946,7 @@
       cardSet(card, "age", String(d.age || "").replace(/[^\d.]/g, ""));
       cardSet(card, "weightKg", d.weightKg || "");
       cardSet(card, "neutered", d.neutered);
-      cardSet(card, "chip", d.chip || care.chip || "");
+      cardSet(card, "chip", digitsOnly(d.chip || care.chip || "").slice(0, 15));
       cardSet(card, "preventative", care.preventative || d.preventative);
       cardSet(card, "diseases", care.diseases || d.diseases);
       cardSet(card, "diseaseOther", care.diseaseOther || d.diseaseOther || "");
@@ -1970,7 +1971,7 @@
         age: cardVal(card, "age") ? cardVal(card, "age") + "歲" : "",
         weightKg: cardVal(card, "weightKg"),
         neutered: cardRadio(card, "neutered"),
-        chip: cardVal(card, "chip"),
+        chip: digitsOnly(cardVal(card, "chip")).slice(0, 15),
         preventative: cardRadio(card, "preventative"),
         diseases: cardChecks(card, "diseases"),
         diseaseOther: cardVal(card, "diseaseOther"),
@@ -2082,6 +2083,12 @@
       const w = parseFloat(String(cardVal(card, "weightKg")).replace(",", "."));
       push(item("weightKg", Number.isFinite(w) && w >= 0.1 && w <= 99, "請填寫體重（公斤）"));
       push(item("neutered", !!cardRadio(card, "neutered"), "請選擇節育"));
+      const chip = digitsOnly(cardVal(card, "chip"));
+      if (cardVal(card, "chip") && !/^\d+$/.test(cardVal(card, "chip").replace(/\s/g, ""))) {
+        push(item("chip", false, "晶片號碼只能填數字，請勿含英文字母、空格或連字號"));
+      } else if (chip && chip.length > 15) {
+        push(item("chip", false, "晶片號碼最多 15 位數字"));
+      }
       push(item("preventative", !!cardRadio(card, "preventative"), "請選擇是否定期投藥"));
       const dis = cardChecks(card, "diseases");
       if (!dis.length) push(item("diseases", false, "請勾選病史"));
@@ -2720,13 +2727,25 @@
         btn.textContent = "複製失敗";
       }
     });
+    document.getElementById("step-1").addEventListener("beforeinput", (e) => {
+      const t = e.target;
+      if (!t || t.getAttribute("data-k") !== "chip") return;
+      if (e.inputType && e.inputType.indexOf("insert") === 0 && e.data && /\D/.test(e.data)) e.preventDefault();
+    });
     document.getElementById("step-1").addEventListener("input", (e) => {
       const t = e.target;
       if (!t) return;
       if (t.getAttribute && t.getAttribute("data-k") === "chip") {
-        const next = digitsOnly(t.value).slice(0, 20);
+        const next = digitsOnly(t.value).slice(0, 15);
         if (t.value !== next) t.value = next;
       }
+    });
+    document.getElementById("step-1").addEventListener("paste", (e) => {
+      const t = e.target;
+      if (!t || t.getAttribute("data-k") !== "chip") return;
+      e.preventDefault();
+      const text = digitsOnly((e.clipboardData || window.clipboardData).getData("text")).slice(0, 15);
+      t.value = text;
     });
     document.getElementById("ownerName").addEventListener("compositionstart", () => {
       ownerNameComposing = true;
