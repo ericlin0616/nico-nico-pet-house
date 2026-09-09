@@ -1615,41 +1615,18 @@
             <input id="p__IDX___name" data-k="name" type="text" maxlength="40" />
             <p class="error" data-err="p__IDX___name"></p>
           </div>
-          <div class="field">
+          <fieldset class="field">
+            <legend>毛孩是 <span class="req">必填</span></legend>
+            <div class="chips duo">
+              <label class="choice"><input type="radio" name="p__IDX___species" data-k="species" value="狗" /> 狗</label>
+              <label class="choice"><input type="radio" name="p__IDX___species" data-k="species" value="貓" /> 貓</label>
+            </div>
+            <p class="error" data-err="p__IDX___species"></p>
+          </fieldset>
+          <div class="field" data-breed-field hidden>
             <label for="p__IDX___breed">品種 <span class="req">必填</span></label>
-            <select id="p__IDX___breed" data-k="breed" data-reveal="p__IDX___breedOtherWrap">
-              <option value="">請選擇品種</option>
-              <optgroup label="狗">
-                <option value="米克斯">米克斯</option>
-                <option value="瑪爾濟斯">瑪爾濟斯</option>
-                <option value="博美">博美</option>
-                <option value="貴賓">貴賓</option>
-                <option value="玩具貴賓">玩具貴賓</option>
-                <option value="迷你貴賓">迷你貴賓</option>
-                <option value="比熊">比熊</option>
-                <option value="吉娃娃">吉娃娃</option>
-                <option value="約克夏">約克夏</option>
-                <option value="雪納瑞">雪納瑞</option>
-                <option value="法鬥">法鬥</option>
-                <option value="柯基">柯基</option>
-                <option value="柴犬">柴犬</option>
-                <option value="臘腸">臘腸</option>
-                <option value="西施">西施</option>
-                <option value="巴哥">巴哥</option>
-                <option value="黃金獵犬">黃金獵犬</option>
-                <option value="拉布拉多">拉布拉多</option>
-                <option value="哈士奇">哈士奇</option>
-                <option value="邊境牧羊犬">邊境牧羊犬</option>
-              </optgroup>
-              <optgroup label="貓">
-                <option value="米克斯貓">米克斯貓</option>
-                <option value="英國短毛">英國短毛</option>
-                <option value="美國短毛">美國短毛</option>
-                <option value="波斯">波斯</option>
-                <option value="布偶">布偶</option>
-                <option value="蘇格蘭摺耳">蘇格蘭摺耳</option>
-              </optgroup>
-              <option value="其他">其他</option>
+            <select id="p__IDX___breed" data-k="breed" data-reveal="p__IDX___breedOtherWrap" disabled>
+              <option value="">請先選擇貓或狗</option>
             </select>
             <div class="reveal" id="p__IDX___breedOtherWrap" hidden>
               <label class="sr-only" for="p__IDX___breedOther">其他品種</label>
@@ -1802,6 +1779,10 @@
       constructor(message) { super(message); this.name = "AppError"; }
     }
 
+    const BREEDS = {
+      狗: ["米克斯", "瑪爾濟斯", "博美", "貴賓", "玩具貴賓", "迷你貴賓", "比熊", "吉娃娃", "約克夏", "雪納瑞", "法鬥", "柯基", "柴犬", "臘腸", "西施", "巴哥", "黃金獵犬", "拉布拉多", "哈士奇", "邊境牧羊犬"],
+      貓: ["米克斯", "英國短毛", "美國短毛", "波斯", "布偶", "蘇格蘭摺耳", "俄羅斯藍貓"]
+    };
     let current = 1;
     let pad = null;
     let otpLeft = 0;
@@ -1968,7 +1949,39 @@
       });
     }
 
-    function petCards() {
+    function fillBreedOptions(card, keepValue) {
+      const species = cardRadio(card, "species");
+      const sel = card.querySelector("[data-k=\"breed\"]");
+      const wrap = card.querySelector("[data-breed-field]");
+      if (!sel) return;
+      const prev = keepValue != null ? String(keepValue) : sel.value;
+      sel.innerHTML = "";
+      const ph = document.createElement("option");
+      ph.value = "";
+      ph.textContent = species ? "請選擇品種" : "請先選擇貓或狗";
+      sel.appendChild(ph);
+      if (!species) {
+        sel.disabled = true;
+        if (wrap) wrap.hidden = true;
+        syncReveals();
+        return;
+      }
+      (BREEDS[species] || []).forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+      const other = document.createElement("option");
+      other.value = "其他";
+      other.textContent = "其他";
+      sel.appendChild(other);
+      sel.disabled = false;
+      if (wrap) wrap.hidden = false;
+      const allowed = (BREEDS[species] || []).concat(["其他"]);
+      sel.value = allowed.indexOf(prev) >= 0 ? prev : "";
+      syncReveals();
+    }
       return $$("[data-pet]", document.getElementById("pets-root"));
     }
     function cardVal(card, key) {
@@ -2002,6 +2015,12 @@
         if (sample) bindExclusive(sample.name, card);
       });
       $$("[data-reveal]", card).forEach((input) => input.addEventListener("change", syncReveals));
+      $$("input[data-k=\"species\"]", card).forEach((el) => {
+        el.addEventListener("change", () => {
+          fillBreedOptions(card, "");
+          saveDraft();
+        });
+      });
       const rm = card.querySelector("[data-remove-pet]");
       if (rm) rm.addEventListener("click", () => {
         if (petCards().length <= 1) return;
@@ -2033,6 +2052,7 @@
       document.getElementById("pets-root").appendChild(card);
       bindPetCard(card);
       if (data) fillPet(card, data);
+      else fillBreedOptions(card);
       if (data && (cardChecks(card, "health14").length || cardChecks(card, "diseases").length)) {
         const fold = card.querySelector("details.fold");
         if (fold) fold.open = true;
@@ -2046,23 +2066,12 @@
       const d = data || {};
       const care = d.care || d;
       cardSet(card, "name", d.name || "");
+      cardSet(card, "species", d.species || "");
+      const list = BREEDS[d.species] || [];
+      const pick = d.breedPick || (list.indexOf(d.breed) >= 0 ? d.breed : (d.breed ? "其他" : ""));
+      fillBreedOptions(card, pick);
+      if (pick === "其他") cardSet(card, "breedOther", d.breedOther || d.breed || "");
       cardSet(card, "gender", d.gender);
-      const known = $$("select[data-k=\"breed\"] option", card).map((o) => o.value).filter(Boolean);
-      const savedPick = d.breedPick || "";
-      const savedBreed = d.breed || "";
-      if (savedPick && known.indexOf(savedPick) >= 0) {
-        cardSet(card, "breed", savedPick);
-        cardSet(card, "breedOther", d.breedOther || (savedPick === "其他" ? savedBreed : ""));
-      } else if (savedBreed && known.indexOf(savedBreed) >= 0) {
-        cardSet(card, "breed", savedBreed);
-        cardSet(card, "breedOther", "");
-      } else if (savedBreed) {
-        cardSet(card, "breed", "其他");
-        cardSet(card, "breedOther", savedBreed);
-      } else {
-        cardSet(card, "breed", "");
-        cardSet(card, "breedOther", "");
-      }
       cardSet(card, "age", String(d.age || "").replace(/[^\d.]/g, ""));
       cardSet(card, "weightKg", d.weightKg || "");
       cardSet(card, "neutered", d.neutered);
@@ -2086,6 +2095,7 @@
     function collectPet(card) {
       return {
         name: cardVal(card, "name"),
+        species: cardRadio(card, "species"),
         gender: cardRadio(card, "gender"),
         breed: cardVal(card, "breed") === "其他" ? cardVal(card, "breedOther") : cardVal(card, "breed"),
         breedPick: cardVal(card, "breed"),
@@ -2200,6 +2210,7 @@
       const list = [];
       const push = (row) => { if (row) list.push(row); };
       push(item("name", cardVal(card, "name").length >= 1, "請填寫毛孩名字"));
+      push(item("species", !!cardRadio(card, "species"), "請選擇貓或狗"));
       push(item("gender", !!cardRadio(card, "gender"), "請選擇性別"));
       const breedPick = cardVal(card, "breed");
       if (!breedPick) push(item("breed", false, "請選擇品種"));

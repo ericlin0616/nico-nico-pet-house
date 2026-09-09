@@ -45,7 +45,7 @@ var CONFIG = {
 
 var SHEET_HEADERS = [
   "案件識別碼", "送出時間", "飼主名稱", "聯絡電話", "電子信箱", "LINE名稱", "地址",
-  "緊急聯絡人", "緊急聯絡人電話", "毛孩名字", "性別", "品種", "年齡", "體重kg", "節育", "晶片號碼", "定期投藥",
+  "緊急聯絡人", "緊急聯絡人電話", "毛孩名字", "種類", "性別", "品種", "年齡", "體重kg", "節育", "晶片號碼", "定期投藥",
   "病史", "最近食慾", "最近排便", "散步", "館內點心",
   "已同意條款", "簽署時間", "雲端資料夾", "PDF連結", "簽名檔"
 ];
@@ -182,7 +182,7 @@ function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl,
   if (care.snackAllergy) snack += (snack ? "；" : "") + care.snackAllergy;
   getSheet_().appendRow([
     caseId, tzNow, owner.name || "", owner.phone || "", owner.email || "", owner.lineName || "", owner.address || "",
-    owner.emergencyName || "", owner.emergencyPhone || "", pet.name || "", pet.gender || "", pet.breed || "", pet.age || "", pet.weightKg || "",
+    owner.emergencyName || "", owner.emergencyPhone || "", pet.name || "", pet.species || "", pet.gender || "", pet.breed || "", pet.age || "", pet.weightKg || "",
     pet.neutered || care.neutered || "", pet.chip || care.chip || "", care.preventative || "",
     diseases, care.appetite || "", care.stool || "", walk, snack,
     payload.agreedToTerms && payload.agreedToPhoto ? "電子簽章、毛孩影像" : (payload.agreedToTerms ? "電子簽章" : "否"),
@@ -217,10 +217,10 @@ function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) 
   ]);
   bar_(body, "毛孩　" + (pet.name || ""));
   kvTable_(body, [
-    ["毛孩名字", pet.name, "品種", pet.breed],
-    ["年齡", pet.age, "體重", pet.weightKg ? pet.weightKg + " kg" : ""],
-    ["性別", checksLine_(["男", "女"], pet.gender), "節育", checksLine_(["已節育", "未節育"], pet.neutered || care.neutered)],
-    ["晶片號碼", pet.chip || care.chip || "未填", "定期投藥", checksLine_(["是", "否"], care.preventative)],
+    ["毛孩名字", pet.name, "種類", pet.species || ""],
+    ["品種", pet.breed, "年齡", pet.age],
+    ["體重", pet.weightKg ? pet.weightKg + " kg" : "", "性別", checksLine_(["男", "女"], pet.gender)],
+    ["節育", checksLine_(["已節育", "未節育"], pet.neutered || care.neutered), "晶片號碼", pet.chip || care.chip || "未填"],
     ["最近食慾", checksLine_(["馬上吃完", "看心情吃", "不吃"], care.appetite), "最近排便", checksLine_(["正常", "軟便", "拉稀"], care.stool)],
     ["散步", checksLine_(["暴衝", "不走草", "不散步", "備註"], care.walk) + extra_(care.walkNote), "館內點心", checksLine_(["是", "否", "食物過敏"], care.snack) + extra_(care.snackAllergy)]
   ]);
