@@ -110,6 +110,7 @@ function submit_(payload) {
   var owner = form.owner || {};
   var list = petsOf_(form);
   if (!list.length) throw new Error("請填寫毛孩資料。");
+  if (list.length > 3) throw new Error("一次最多登記三隻毛孩。");
   var phone = String(owner.phone || "").replace(/\D/g, "");
   if (!/^09\d{8}$/.test(phone)) throw new Error("手機號碼格式不正確。");
   if (String(owner.address || "").trim().length < 2) throw new Error("請填寫家長地址或社區名稱及樓號。");
@@ -123,28 +124,39 @@ function submit_(payload) {
   if (!payload.agreedToPhoto) throw new Error("請先同意毛孩影像拍攝與使用。");
   if (!payload.signatureDataUrl) throw new Error("找不到手寫簽名，請返回上一步重簽。");
 
-  var pet = list[0].pet || {};
-  var care = list[0].care || pet;
-  var chip = String(pet.chip || care.chip || "").replace(/\D/g, "");
-  if (String(pet.chip || care.chip || "") && !/^\d{1,15}$/.test(String(pet.chip || care.chip || "").replace(/\s/g, ""))) {
-    throw new Error("晶片號碼只能填數字，請勿含英文字母、空格或連字號。");
-  }
-  pet.chip = chip;
-  care.chip = chip;
+  list.forEach(function (item) {
+    var p = item.pet || {};
+    var c = item.care || p;
+    var rawChip = String(p.chip || c.chip || "");
+    var chip = rawChip.replace(/\D/g, "");
+    if (rawChip && !/^\d{1,15}$/.test(rawChip.replace(/\s/g, ""))) {
+      throw new Error((p.name || "毛孩") + " 的晶片號碼只能填數字，請勿含英文字母、空格或連字號。");
+    }
+    p.chip = chip;
+    c.chip = chip;
+    item.pet = p;
+    item.care = c;
+  });
+
   var caseId = makeCaseId_();
   var now = new Date();
   var tzNow = Utilities.formatDate(now, "Asia/Taipei", "yyyy-MM-dd HH:mm:ss");
-  var names = [pet.name].filter(function (n) { return n; });
+  var names = list.map(function (x) { return x.pet && x.pet.name; }).filter(function (n) { return n; });
+  var folderLabel = names.length > 1
+    ? safeName_(names[0]) + "等" + names.length + "隻"
+    : safeName_(names[0] || "毛孩");
   var folder = getRootFolder_();
   var caseFolder = folder.createFolder(
-    caseId + "_" + safeName_(pet.name || "毛孩") + "_" + Utilities.formatDate(now, "Asia/Taipei", "yyyyMMdd")
+    caseId + "_" + folderLabel + "_" + Utilities.formatDate(now, "Asia/Taipei", "yyyyMMdd")
   );
   var signBlob = dataUrlToBlob_(payload.signatureDataUrl, caseId + "_簽名.png");
   var signFile = caseFolder.createFile(signBlob);
-  var pdfFile = createPdf_(caseFolder, caseId, tzNow, owner, pet, care, payload, signBlob);
+  var pdfFile = createPdf_(caseFolder, caseId, tzNow, owner, list, payload, signBlob);
   try { pdfFile.addViewer(String(owner.email || "")); } catch (e1) {}
   try { signFile.addViewer(String(owner.email || "")); } catch (e2) {}
-  appendRow_(caseId, tzNow, owner, pet, care, payload, caseFolder.getUrl(), pdfFile.getUrl(), signFile.getUrl());
+  list.forEach(function (item) {
+    appendRow_(caseId, tzNow, owner, item.pet, item.care || item.pet, payload, caseFolder.getUrl(), pdfFile.getUrl(), signFile.getUrl());
+  });
 
   var mailed = false;
   try {
@@ -160,7 +172,7 @@ function submit_(payload) {
     caseId: caseId,
     pdfUrl: pdfFile.getUrl(),
     message: mailed
-      ? "入館資料已送出（" + (pet.name || "毛孩") + "）。副本已寄到 " + owner.email + "。"
+      ? "入館資料已送出（" + names.join("、") + "）。副本已寄到 " + owner.email + "。"
       : "入館資料已送出。案件與 PDF 已存檔；目前 Google 寄信受限，請用信件中的雲端連結取得副本。"
   };
 }
@@ -190,10 +202,9 @@ function appendRow_(caseId, tzNow, owner, pet, care, payload, folderUrl, pdfUrl,
   ]);
 }
 
-function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) {
+function createPdf_(folder, caseId, tzNow, owner, list, payload, signBlob) {
   owner = owner || {};
-  pet = pet || {};
-  care = care || pet;
+  list = list || [];
   var doc = DocumentApp.create("入館資料表 " + caseId);
   var body = doc.getBody();
   body.setMarginTop(22);
@@ -215,17 +226,21 @@ function createPdf_(folder, caseId, tzNow, owner, pet, care, payload, signBlob) 
     ["地址", owner.address, "", ""],
     ["緊急聯絡人", owner.emergencyName, "緊急聯繫電話", owner.emergencyPhone]
   ]);
-  bar_(body, "毛孩　" + (pet.name || ""));
-  kvTable_(body, [
-    ["毛孩名字", pet.name, "種類", pet.species || ""],
-    ["品種", pet.breed, "年齡", pet.age],
-    ["體重", pet.weightKg ? pet.weightKg + " kg" : "", "性別", checksLine_(["男", "女"], pet.gender)],
-    ["節育", checksLine_(["已節育", "未節育"], pet.neutered || care.neutered), "晶片號碼", pet.chip || care.chip || "未填"],
-    ["定期投藥", checksLine_(["是", "否"], care.preventative), "", ""],
-    ["最近食慾", checksLine_(["馬上吃完", "看心情吃", "不吃"], care.appetite), "最近排便", checksLine_(["正常", "軟便", "拉稀"], care.stool)],
-    ["散步", checksLine_(["暴衝", "不走草", "不散步", "備註"], care.walk) + extra_(care.walkNote), "館內點心", checksLine_(["是", "否", "食物過敏"], care.snack) + extra_(care.snackAllergy)]
-  ]);
-  checkBlock_(body, "病史", ["癲癇", "心臟病", "其他", "無"], care.diseases, care.diseaseOther);
+  list.forEach(function (item, i) {
+    var pet = item.pet || {};
+    var care = item.care || pet;
+    bar_(body, "毛孩 " + (i + 1) + (pet.name ? "　" + pet.name : ""));
+    kvTable_(body, [
+      ["毛孩名字", pet.name, "種類", pet.species || ""],
+      ["品種", pet.breed, "年齡", pet.age],
+      ["體重", pet.weightKg ? pet.weightKg + " kg" : "", "性別", checksLine_(["男", "女"], pet.gender)],
+      ["節育", checksLine_(["已節育", "未節育"], pet.neutered || care.neutered), "晶片號碼", pet.chip || care.chip || "未填"],
+      ["定期投藥", checksLine_(["是", "否"], care.preventative), "", ""],
+      ["最近食慾", checksLine_(["馬上吃完", "看心情吃", "不吃"], care.appetite), "最近排便", checksLine_(["正常", "軟便", "拉稀"], care.stool)],
+      ["散步", checksLine_(["暴衝", "不走草", "不散步", "備註"], care.walk) + extra_(care.walkNote), "館內點心", checksLine_(["是", "否", "食物過敏"], care.snack) + extra_(care.snackAllergy)]
+    ]);
+    checkBlock_(body, "病史", ["癲癇", "心臟病", "其他", "無"], care.diseases, care.diseaseOther);
+  });
   bar_(body, "飼主簽名");
   var sign = body.appendTable([["", ""]]);
   paintCell_(sign.getCell(0, 0), "本人已詳閱並同意採用電子文件與手寫電子簽章方式簽署本契約，其法律效力等同於實體紙本簽章。\n本人同意本館於入館期間拍攝毛孩影像，並依條款所定範圍用於照護紀錄、官方網站及社群宣傳。\n電子簽章同意：" + (payload.agreedToTerms ? "是" : "否") + "　毛孩影像同意：" + (payload.agreedToPhoto ? "是" : "否") + "\n簽署時間：" + (prettyTime_(payload.agreedAt) || tzNow), { bg: FORM.paper, size: 9 });

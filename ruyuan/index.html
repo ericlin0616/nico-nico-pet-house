@@ -1416,6 +1416,9 @@
         </article>
 
         <div id="pets-root"></div>
+        <div class="pet-actions">
+          <button type="button" class="btn btn-ghost" id="add-pet">新增毛孩（最多三隻）</button>
+        </div>
 
         <div class="actions">
           <p class="need-count" id="need-count" hidden></p>
@@ -1605,9 +1608,10 @@
         <div class="pet-head">
           <div>
             <span class="card-kicker">Pet</span>
-            <h2>毛孩資料</h2>
+            <h2>毛孩 <span data-pet-n>1</span></h2>
             <p class="lede">請依紙本入館資料表填寫這隻毛孩的資料。</p>
           </div>
+          <button type="button" class="btn btn-back" data-remove-pet hidden>移除</button>
         </div>
         <div class="stack">
           <div class="field">
@@ -1769,7 +1773,7 @@
     const DRAFT_KEY_OLD = "nico-checkin-draft-v0";
     const FETCH_MS = 28000;
     const OTP_SEC = 60;
-    const MAX_PETS = 1;
+    const MAX_PETS = 3;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const $ = (sel, root) => (root || document).querySelector(sel);
@@ -2162,7 +2166,7 @@
           fill("emergencyName", o.emergencyName);
           fill("emergencyPhone", o.emergencyPhone);
           
-          if (Array.isArray(data.pets) && data.pets.length) pets = data.pets.slice(0, 1);
+          if (Array.isArray(data.pets) && data.pets.length) pets = data.pets.slice(0, MAX_PETS);
           else if (data.pet) pets = [{ ...data.pet, ...(data.care || {}) }];
         }
         pets.forEach((p) => addPet(p));
@@ -2962,6 +2966,12 @@
       previewSignature();
     });
     document.getElementById("send-otp").addEventListener("click", sendOtp);
+    document.getElementById("add-pet").addEventListener("click", () => {
+      if (petCards().length >= MAX_PETS) return;
+      const card = addPet();
+      saveDraft();
+      if (card) card.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    });
     document.getElementById("submit-form").addEventListener("click", submitAll);
     window.addEventListener("beforeunload", (e) => {
       if (!submitting) return;
