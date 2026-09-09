@@ -764,6 +764,40 @@
       font-weight: 700;
       color: var(--cocoa-deep);
     }
+    .submit-wait {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+      font-size: 0.86rem;
+      color: var(--cocoa-deep);
+      line-height: 1.45;
+    }
+    .submit-wait[hidden] { display: none !important; }
+    .submit-wait strong {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+    }
+    .submit-wait span {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .submit-spin {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--oat-soft);
+      border-top-color: var(--cocoa);
+      border-radius: 50%;
+      animation: submitSpin 0.8s linear infinite;
+    }
+    @keyframes submitSpin {
+      to { transform: rotate(360deg); }
+    }
+    body.is-submitting { pointer-events: none; }
+    body.is-submitting .submit-wait,
+    body.is-submitting #submit-form { pointer-events: auto; }
     .cf-box {
       margin: 4px 0 8px;
       padding: 12px;
@@ -960,6 +994,7 @@
       .actions .btn { width: auto; min-width: 168px; }
       .actions .btn-primary { margin-left: auto; order: 2; }
       .actions .btn-back { min-width: 0; margin: 0; order: 1; }
+      .actions .submit-wait { flex: 1 0 100%; order: 0; }
       .sign-frame { height: 200px; }
     }
 
@@ -974,7 +1009,8 @@
       .choice:has(input:checked),
       .fold[open],
       .paw,
-      .bg-paw { animation: none !important; }
+      .bg-paw,
+      .submit-spin { animation: none !important; }
       .bg-paw, .paw-layer { display: none; }
     }
 
@@ -1517,7 +1553,12 @@
           </div>
         </article>
         <div class="actions">
-          <button type="button" class="btn btn-primary" id="submit-form">確認送出入園資料</button>
+          <p class="submit-wait" id="submit-wait" hidden>
+            <span class="submit-spin" aria-hidden="true"></span>
+            <strong id="submit-wait-sec">大約還要 8 秒</strong>
+            <span id="submit-wait-msg">正在建立合約，請勿關閉或返回</span>
+          </p>
+          <button type="button" class="btn btn-primary" id="submit-form">確認送出入館資料</button>
           <button type="button" class="btn btn-back" id="back-2">返回</button>
         </div>
       </section>
@@ -1721,6 +1762,13 @@
     let otpTimer = null;
     let sending = false;
     let submitting = false;
+    let submitTimer = null;
+    const SUBMIT_WAIT_MSGS = [
+      "正在確認驗證碼",
+      "正在產生合約 PDF",
+      "正在存到雲端資料夾",
+      "正在寄送副本到信箱"
+    ];
     let maxReached = 1;
     let petSeq = 0;
     let ownerNameComposing = false;
@@ -2633,6 +2681,42 @@
       return "";
     }
 
+    function stopSubmitWait() {
+      if (submitTimer) {
+        clearInterval(submitTimer);
+        submitTimer = null;
+      }
+      document.body.classList.remove("is-submitting");
+      const wait = document.getElementById("submit-wait");
+      if (wait) wait.hidden = true;
+      const back = document.getElementById("back-2");
+      if (back) back.hidden = false;
+    }
+
+    function startSubmitWait(btn) {
+      const wait = document.getElementById("submit-wait");
+      const secEl = document.getElementById("submit-wait-sec");
+      const msgEl = document.getElementById("submit-wait-msg");
+      const back = document.getElementById("back-2");
+      let left = 8;
+      let tick = 0;
+      document.body.classList.add("is-submitting");
+      if (back) back.hidden = true;
+      wait.hidden = false;
+      btn.textContent = "送出中，請稍候";
+      const paint = () => {
+        if (left > 0) secEl.textContent = "大約還要 " + left + " 秒";
+        else secEl.textContent = "快好了，請再等一下";
+        msgEl.textContent = SUBMIT_WAIT_MSGS[Math.min(SUBMIT_WAIT_MSGS.length - 1, Math.floor(tick / 2))] + "，請勿關閉頁面";
+      };
+      paint();
+      submitTimer = setInterval(() => {
+        tick += 1;
+        if (left > 0) left -= 1;
+        paint();
+      }, 1000);
+    }
+
     async function submitAll() {
       if (submitting) return;
       clearErrors("step-3");
@@ -2647,7 +2731,7 @@
       submitting = true;
       const btn = document.getElementById("submit-form");
       btn.disabled = true;
-      btn.textContent = "送出中…";
+      startSubmitWait(btn);
       try {
         const payload = {
           action: "submit",
@@ -2672,8 +2756,9 @@
         showBanner(3, err.message || "送出失敗，請稍後再試。");
       } finally {
         submitting = false;
+        stopSubmitWait();
         btn.disabled = false;
-        btn.textContent = "確認送出入園資料";
+        btn.textContent = "確認送出入館資料";
       }
     }
 
@@ -2794,6 +2879,11 @@
     });
     document.getElementById("send-otp").addEventListener("click", sendOtp);
     document.getElementById("submit-form").addEventListener("click", submitAll);
+    window.addEventListener("beforeunload", (e) => {
+      if (!submitting) return;
+      e.preventDefault();
+      e.returnValue = "資料還在送出，請稍候完成後再離開。";
+    });
     document.getElementById("park-form").addEventListener("submit", (e) => {
       e.preventDefault();
       if (current === 1) document.getElementById("to-step-2").click();
