@@ -1094,12 +1094,12 @@
     }
     .welcome-row {
       display: flex;
-      width: 300%;
+      width: 400%;
       transition: transform 280ms var(--ease-out);
     }
     .welcome-row figure {
       margin: 0;
-      width: 33.3333%;
+      width: 25%;
       display: block;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -1297,12 +1297,16 @@
           <figure>
             <img src="nicopark-price.jpg" alt="NicoPark 收費一覽" width="1400" height="1980" />
           </figure>
+          <figure>
+            <img src="nicopark-grooming.jpg" alt="寵物美容提醒顧客事項：預約、健康、疫苗、接送緩衝與拒收情況" width="1310" height="1853" />
+          </figure>
         </div>
       </div>
       <div class="welcome-dots" role="tablist" aria-label="須知頁次">
         <button type="button" class="is-on" data-welcome="0" aria-label="預約須知"></button>
         <button type="button" data-welcome="1" aria-label="一日行程表"></button>
         <button type="button" data-welcome="2" aria-label="收費一覽"></button>
+        <button type="button" data-welcome="3" aria-label="美容提醒顧客事項"></button>
       </div>
       <div class="welcome-nav">
         <button type="button" class="btn btn-ghost" id="welcome-prev" hidden>上一張</button>
@@ -3140,16 +3144,17 @@
       const fab = document.getElementById("reopen-welcome");
       const dots = $$("[data-welcome]");
       let idx = 0;
+      const last = 3;
       let startX = 0;
       let dragging = false;
       let agreeing = false;
 
       function setIdx(n) {
-        idx = Math.max(0, Math.min(2, n));
-        row.style.transform = "translateX(-" + (idx * 33.3333) + "%)";
+        idx = Math.max(0, Math.min(last, n));
+        row.style.transform = "translateX(-" + (idx * 25) + "%)";
         dots.forEach((d, i) => d.classList.toggle("is-on", i === idx));
         prev.hidden = idx === 0;
-        next.textContent = idx === 2 ? "我已同意須知，開始填寫" : "下一張";
+        next.textContent = idx === last ? "我已同意須知，開始填寫" : "下一張";
       }
       function formatAgreeTime(d) {
         const parts = new Intl.DateTimeFormat("zh-TW", {
@@ -3196,7 +3201,7 @@
         fab.classList.add("is-agreed");
       }
       next.addEventListener("click", () => {
-        if (idx >= 2) playAgreeThenClose();
+        if (idx >= last) playAgreeThenClose();
         else setIdx(idx + 1);
       });
       prev.addEventListener("click", () => setIdx(idx - 1));
@@ -3216,7 +3221,7 @@
       }, { passive: true });
       document.addEventListener("keydown", (e) => {
         if (overlay.hidden) return;
-        if (e.key === "ArrowRight") { e.preventDefault(); if (idx >= 2) playAgreeThenClose(); else setIdx(idx + 1); }
+        if (e.key === "ArrowRight") { e.preventDefault(); if (idx >= last) playAgreeThenClose(); else setIdx(idx + 1); }
         if (e.key === "ArrowLeft") { e.preventDefault(); setIdx(idx - 1); }
       });
       setIdx(0);
