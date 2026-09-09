@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no" />
-  <meta name="theme-color" content="#AC9D8D" />
+  <meta name="theme-color" content="#E8A4B4" />
   <meta name="description" content="Nico Nico Pet House 尼口尼口寵物精緻美容旅館｜尼口尼口寵物精緻美容旅館｜寵物入館資料與電子簽署" />
   <meta property="og:title" content="入館資料表｜Nico Nico Pet House" />
   <meta property="og:description" content="尼口尼口寵物精緻美容旅館｜寵物入館資料、定型化契約與電子簽署" />
@@ -19,11 +19,15 @@
       --milk: #E7D9CC;
       --warm: #F8F3EC;
       --paper: #FFFcf8;
-      --page: #F1E8DE;
+      --page: #F6EDE4;
       --cocoa: #53453A;
       --cocoa-deep: #3F332B;
       --ink: #4A3C32;
       --muted: #7A6B5E;
+      --pink: #E8A4B4;
+      --pink-soft: #F7DCE3;
+      --pink-deep: #C97A90;
+      --pink-ink: #7A4454;
       --line: color-mix(in srgb, var(--cocoa) 14%, transparent);
       --ok: #5E6B52;
       --danger: #9A5848;
@@ -262,8 +266,8 @@
       white-space: nowrap;
     }
     .site-nav button.is-on {
-      background: var(--cocoa);
-      color: #F8F3EC;
+      background: var(--pink-deep);
+      color: #FFF8FA;
     }
     .site-nav[hidden] { display: none !important; }
 
@@ -385,7 +389,7 @@
     }
     .progress li.is-done:not(:last-child)::after,
     .progress li.is-current:not(:last-child)::after {
-      background: var(--oat);
+      background: var(--pink);
     }
     .progress .num {
       width: 30px;
@@ -403,13 +407,13 @@
       z-index: 1;
     }
     .progress li.is-current .num {
-      background: var(--cocoa);
-      color: var(--warm);
+      background: var(--pink-deep);
+      color: #FFF8FA;
       box-shadow: none;
     }
     .progress li.is-done .num {
-      background: var(--oat);
-      color: var(--warm);
+      background: var(--pink);
+      color: #FFF8FA;
       box-shadow: none;
     }
     .progress .lab {
@@ -426,8 +430,8 @@
       .progress .lab .full { display: inline; }
       .progress .lab .short { display: none; }
     }
-    .progress li.is-current .lab { color: var(--cocoa); font-weight: 600; }
-    .progress li.is-done .lab { color: var(--cocoa); }
+    .progress li.is-current .lab { color: var(--pink-ink); font-weight: 600; }
+    .progress li.is-done .lab { color: var(--pink-deep); }
     .progress li.can-jump { cursor: pointer; }
     .progress li.can-jump:focus-visible .num {
       outline: 2px solid var(--cocoa);
@@ -469,7 +473,7 @@
       font-size: 0.7rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: var(--oat);
+      color: var(--pink-deep);
       font-weight: 600;
       margin-bottom: 6px;
     }
@@ -478,12 +482,15 @@
     .field label.main,
     .field > label,
     fieldset.field > legend {
-      display: block;
+      display: inline-block;
       font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--cocoa);
-      margin-bottom: 6px;
+      font-weight: 700;
+      color: var(--pink-ink);
+      margin-bottom: 8px;
       letter-spacing: 0.02em;
+      background: var(--pink-soft);
+      padding: 3px 9px;
+      border-radius: 4px;
     }
     fieldset.field {
       border: 0;
@@ -492,8 +499,8 @@
       min-width: 0;
     }
     .req {
-      color: var(--danger);
-      font-weight: 500;
+      color: var(--pink-deep);
+      font-weight: 600;
       font-size: 0.72rem;
       letter-spacing: 0;
       margin-left: 4px;
@@ -597,14 +604,18 @@
     }
     .choice input {
       margin: 3px 0 0;
-      accent-color: var(--cocoa);
+      accent-color: var(--pink-deep);
       width: 16px;
       height: 16px;
       flex: none;
     }
     .choice:has(input:checked) {
-      background: color-mix(in srgb, var(--oat) 22%, var(--paper));
-      box-shadow: inset 0 0 0 1.5px var(--cocoa);
+      background: color-mix(in srgb, var(--pink) 28%, var(--paper));
+      box-shadow: inset 0 0 0 1.5px var(--pink-deep);
+    }
+    .choice:has(input[data-none="1"]:checked) {
+      background: var(--pink-soft);
+      box-shadow: inset 0 0 0 1.5px var(--pink-deep);
     }
     .choice:has(input:focus-visible) {
       box-shadow: inset 0 0 0 1.5px var(--cocoa), 0 0 0 3px rgba(172, 157, 141, 0.28);
@@ -678,7 +689,7 @@
     }
     .agree input {
       margin-top: 4px;
-      accent-color: var(--cocoa);
+      accent-color: var(--pink-deep);
       width: 18px;
       height: 18px;
       flex: none;
